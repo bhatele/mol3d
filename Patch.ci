@@ -1,8 +1,8 @@
 mainmodule Patch {
 
   readonly CProxy_Main mainProxy;  
-  readonly CProxy_Patch cellArray;
-  readonly CProxy_Compute interactionArray;
+  readonly CProxy_Patch patchArray;
+  readonly CProxy_Compute computeArray;
 
   readonly int numParts;	// total number of particles
   readonly int m;		// total number of rows in the grid

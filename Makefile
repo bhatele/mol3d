@@ -1,5 +1,5 @@
 CHARMC	=../../../bin/charmc $(OPTS)
-OPTS	= -O2
+OPTS	= -g
 
 all: mol3d
 

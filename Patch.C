@@ -19,8 +19,8 @@
 #include "Compute.h"
 
 /* readonly */ CProxy_Main mainProxy;
-/* readonly */ CProxy_Patch cellArray;
-/* readonly */ CProxy_Compute interactionArray;
+/* readonly */ CProxy_Patch patchArray;
+/* readonly */ CProxy_Compute computeArray;
 
 /* readonly */ int numParts;
 /* readonly */ int m; // Number of Chare Rows
@@ -49,11 +49,11 @@ Main::Main(CkArgMsg* msg) {
   mainProxy = thisProxy;
 
   // initializing the cell 2D array
-  cellArray = CProxy_Patch::ckNew(m,n);
+  patchArray = CProxy_Patch::ckNew(m,n);
   CkPrintf("patches inserted\n");
 
   // initializing the interaction 4D array
-  interactionArray = CProxy_Compute::ckNew();
+  computeArray = CProxy_Compute::ckNew();
  
   // For Round Robin insertion
   int numPes = CkNumPes();
@@ -75,7 +75,7 @@ Main::Main(CkArgMsg* msg) {
 	CkPrintf("error %d %d %d %d\n", x, y, x, y);
       else
 	check[x][y][x][y] = 1;
-      interactionArray( x, y, x, y ).insert( (currPE++) % numPes );
+      computeArray( x, y, x, y ).insert( (currPE++) % numPes );
 
       // (x,y) and (x+1,y) pair
       (x == m-1) ? (i=0, k=x) : (i=x, k=x+1);
@@ -83,7 +83,7 @@ Main::Main(CkArgMsg* msg) {
 	CkPrintf("error %d %d %d %d\n", i, y, k, y);
       else
 	check[i][y][k][y] = 1;
-      interactionArray( i, y, k, y ).insert( (currPE++) % numPes );
+      computeArray( i, y, k, y ).insert( (currPE++) % numPes );
 
       // (x,y) and (x,y+1) pair
       (y == n-1) ? (j=0, l=y) : (j=y, l=y+1);
@@ -91,7 +91,7 @@ Main::Main(CkArgMsg* msg) {
 	CkPrintf("error %d %d %d %d\n", x, j, x, l);
       else
 	check[x][j][x][l] = 1;
-      interactionArray( x, j, x, l ).insert( (currPE++) % numPes );
+      computeArray( x, j, x, l ).insert( (currPE++) % numPes );
 
       // (x,y) and (x+1,y+1) pair, Irrespective of y
       (x == m-1) ? ( i=0, k=x, j=(y+1)%n, l=y ) : (i=x, k=x+1, j=y, l=(y+1)%n );
@@ -99,7 +99,7 @@ Main::Main(CkArgMsg* msg) {
 	CkPrintf("error %d %d %d %d\n", i, j, k, l);
       else
 	check[i][j][k][l] = 1;
-      interactionArray( i, j, k, l ).insert( (currPE++) % numPes );
+      computeArray( i, j, k, l ).insert( (currPE++) % numPes );
 
       // (x,y) and (x-1,y+1) pair
       (x == 0) ? ( i=x, k=(x-1+m)%m, j=y, l=(y+1)%n ) : (i=x-1, k=x, j=(y+1)%n, l=y );
@@ -107,22 +107,22 @@ Main::Main(CkArgMsg* msg) {
 	CkPrintf("error %d %d %d %d\n", i, j, k, l);
       else
 	check[i][j][k][l] = 1;
-      interactionArray( i, j, k, l ).insert( (currPE++) % numPes );
+      computeArray( i, j, k, l ).insert( (currPE++) % numPes );
 
     }
   }
 
-  interactionArray.doneInserting();
+  computeArray.doneInserting();
   CkPrintf("computes inserted\n");
 
   // setup liveviz
-  // CkCallback c(CkIndex_Patch::requestNextFrame(0),cellArray);
+  // CkCallback c(CkIndex_Patch::requestNextFrame(0),patchArray);
   // liveVizConfig cfg(liveVizConfig::pix_color,true);
-  // liveVizInit(cfg,cellArray,c);
+  // liveVizInit(cfg,patchArray,c);
 
   // sleep(1);
   CkPrintf("computes start");
-  cellArray.start();
+  patchArray.start();
 }
 
 
@@ -180,39 +180,39 @@ void Patch::start() {
   int i, j, k, l;
   
   // self interaction
-  interactionArray( x, y, x, y).interact(particles, x, y);
+  computeArray( x, y, x, y).interact(particles, x, y);
 
   // interaction with (x-1, y-1)
   (x == 0) ? ( i=x, k=(x-1+m)%m, j=y, l=(y-1+n)%n ) : (i=x-1, k=x, j=(y-1+n)%n, l=y);
-  interactionArray( i, j, k, l ).interact(particles, x, y);
+  computeArray( i, j, k, l ).interact(particles, x, y);
 
   // interaction with (x-1, y)
   (x == 0) ? (i=x, k=(x-1+m)%m) : (i=x-1, k=x);
-  interactionArray( i, y, k, y).interact(particles, x, y);
+  computeArray( i, y, k, y).interact(particles, x, y);
 
   // interaction with (x-1, y+1)
   (x == 0) ? ( i=x, k=(x-1+m)%m, j=y, l=(y+1)%n ) : (i=x-1, k=x, j=(y+1)%n, l=y);
-  interactionArray( i, j, k, l ).interact(particles, x, y);
+  computeArray( i, j, k, l ).interact(particles, x, y);
 
   // interaction with (x, y-1)
   (y == 0) ? (j=y, l=(y-1+n)%n) : (j=y-1, l=y);
-  interactionArray( x, j, x, l ).interact(particles, x, y);
+  computeArray( x, j, x, l ).interact(particles, x, y);
 
   // interaction with (x, y+1)
   (y == n-1) ? (j=(y+1)%n, l=y) : (j=y, l=y+1);// compute
-  interactionArray( x, j, x, l ).interact(particles, x, y);
+  computeArray( x, j, x, l ).interact(particles, x, y);
 
   // interaction with (x+1, y-1)
   (x == m-1) ? ( i=0, k=x, j=(y-1+n)%n, l=y ) : (i=x, k=x+1, j=y, l=(y-1+n)%n );
-  interactionArray( i, j, k, l ).interact(particles, x, y);
+  computeArray( i, j, k, l ).interact(particles, x, y);
 
   // interaction with (x+1, y)
   (x == m-1) ? (i=0, k=x) : (i=x, k=x+1);
-  interactionArray( i, y, k, y).interact(particles, x, y);
+  computeArray( i, y, k, y).interact(particles, x, y);
 
   // interaction with (x+1, y+1)
   (x == m-1) ? ( i=0, k=x, j=(y+1)%n, l=y ) : (i=x, k=x+1, j=y, l=(y+1)%n );
-  interactionArray( i, j, k, l ).interact(particles, x, y);
+  computeArray( i, j, k, l ).interact(particles, x, y);
 
 }
 
@@ -252,7 +252,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray((x-1+m)%m,(y-1+n)%n).updateParticles(outgoing);
+    patchArray((x-1+m)%m,(y-1+n)%n).updateParticles(outgoing);
 	  
     // particles sent to (x-1,y)		
     outgoing.removeAll();
@@ -264,7 +264,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray((x-1+m)%m,y).updateParticles(outgoing);
+    patchArray((x-1+m)%m,y).updateParticles(outgoing);
 
     // particles sent to (x-1,y+1)
     outgoing.removeAll();
@@ -276,7 +276,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray((x-1+m)%m,(y+1)%n).updateParticles(outgoing);
+    patchArray((x-1+m)%m,(y+1)%n).updateParticles(outgoing);
 
     // particles sent to (x+1,y-1)
     outgoing.removeAll();
@@ -288,7 +288,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray((x+1)%m,(y-1+n)%n).updateParticles(outgoing);
+    patchArray((x+1)%m,(y-1+n)%n).updateParticles(outgoing);
 
     // particles sent to (x+1,y)
     outgoing.removeAll();
@@ -300,7 +300,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray((x+1)%m,y).updateParticles(outgoing);
+    patchArray((x+1)%m,y).updateParticles(outgoing);
 
     // particles sent to (x+1,y+1)
     outgoing.removeAll();
@@ -312,7 +312,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray((x+1)%m,(y+1)%n).updateParticles(outgoing);
+    patchArray((x+1)%m,(y+1)%n).updateParticles(outgoing);
 
     // particles sent to (x,y-1)
     outgoing.removeAll();
@@ -324,7 +324,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray(x,(y-1+n)%n).updateParticles(outgoing);
+    patchArray(x,(y-1+n)%n).updateParticles(outgoing);
 
     // particles sent to (x,y+1)
     outgoing.removeAll();
@@ -336,7 +336,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       } else
 	i++;
     }
-    cellArray(x,(y+1)%n).updateParticles(outgoing);
+    patchArray(x,(y+1)%n).updateParticles(outgoing);
 
     outgoing.removeAll();
 

@@ -17,8 +17,8 @@
 #include "Compute.h"
 
 extern /* readonly */ CProxy_Main mainProxy;
-extern /* readonly */ CProxy_Patch cellArray;
-extern /* readonly */ CProxy_Compute interactionArray;
+extern /* readonly */ CProxy_Patch patchArray;
+extern /* readonly */ CProxy_Compute computeArray;
 
 extern /* readonly */ int numParts;
 extern /* readonly */ int m; // Number of Chare Rows
@@ -47,7 +47,7 @@ void Compute::interact(CkVec<Particle> particles, int x, int y ) {
   // self interaction check
   if( thisIndex.x == thisIndex.z && thisIndex.y == thisIndex.w ) {
     interact(particles,particles);
-    cellArray( x, y).updateForces(particles);
+    patchArray( x, y).updateForces(particles);
   } else {
     if(cellCount == 0) {
       bufferedX = x;
@@ -58,8 +58,8 @@ void Compute::interact(CkVec<Particle> particles, int x, int y ) {
       // if both particle sets are received, compute interaction
       cellCount = 0;
       interact(bufferedParticles,particles);
-      cellArray(bufferedX, bufferedY).updateForces(bufferedParticles);
-      cellArray(x, y).updateForces(particles);
+      patchArray(bufferedX, bufferedY).updateForces(bufferedParticles);
+      patchArray(x, y).updateForces(particles);
     }
   }
 }
