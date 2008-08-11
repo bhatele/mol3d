@@ -7,8 +7,7 @@
 
 /** \file Compute.h
  *  Author: Abhinav S Bhatele
- *  Date Created: July 1st, 2008
- *
+ *  Date Created: August 11th, 2008
  */
 
 #ifndef __COMPUTE_H__
@@ -23,6 +22,7 @@ class Compute : public CBase_Compute {
     CkVec<Particle> bufferedParticles;
     int bufferedX;
     int bufferedY;
+    int bufferedZ;
 
     void interact(CkVec<Particle> &first, CkVec<Particle> &second);
     void interact(Particle &first, Particle &second);
@@ -31,7 +31,7 @@ class Compute : public CBase_Compute {
     Compute();
     Compute(CkMigrateMessage *msg);
 
-    void interact(CkVec<Particle> particles, int i, int j);
+    void interact(CkVec<Particle> particles, int x, int y, int z);
 
 };
 

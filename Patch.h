@@ -7,8 +7,7 @@
 
 /** \file Patch.h
  *  Author: Abhinav S Bhatele
- *  Date Created: July 1st, 2008
- *
+ *  Date Created: August 11th, 2008
  */
 
 
@@ -19,14 +18,12 @@
  *
  */
 class Main : public CBase_Main {
-  private:
-    int checkInCount; // Count to terminate
-
   public:
     Main(CkArgMsg* msg);
     Main(CkMigrateMessage* msg);
 
-    void checkIn();
+    void allDone();
+    void computeCreationDone();
 };
 
 /** \class Patch
@@ -42,7 +39,9 @@ class Patch : public CBase_Patch {
     int updateCount;
     bool updateFlag;
     bool incomingFlag;
+    int computesList[NUM_NEIGHBORS][6];
 
+    void migrateToPatch(Particle p, int &px, int &py, int &pz);
     void updateProperties();	// updates properties after receiving forces from computes
     void checkNextStep();	// checks whether to continue with next step
     void print();		// prints all its particles
@@ -53,11 +52,14 @@ class Patch : public CBase_Patch {
     ~Patch();
 
     void start();
-    void updateParticles(CkVec<Particle>&);
-    void updateForces(CkVec<Particle>&);
-    void limitVelocity(Particle&);
-    Particle& wrapAround(Particle &);
-    // void requestNextFrame(liveVizRequestMsg *m);
+    void createComputes();
+    void updateParticles(CkVec<Particle> &);
+    void updateForces(CkVec<Particle> &);
+    void limitVelocity(Particle &p);
+    Particle& wrapAround(Particle &p);
+#ifdef RUN_LIVEVIZ
+    void requestNextFrame(liveVizRequestMsg *m);
+#endif
 };
 
 #endif
