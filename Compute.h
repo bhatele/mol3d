@@ -32,7 +32,7 @@ class Compute : public CBase_Compute {
     Compute(CkMigrateMessage *msg);
 
     void interact(CkVec<Particle> particles, int x, int y, int z);
-
+    void calcForces(CkVec<Particle> &first, CkVec<Particle> &second);
 };
 
 #endif

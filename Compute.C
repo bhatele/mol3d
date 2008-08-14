@@ -44,15 +44,14 @@ Compute::Compute(CkMigrateMessage *msg) { }
   
 // Entry method to receive vector of particles
 void Compute::interact(CkVec<Particle> particles, int x, int y, int z) {
-
   int i;
 
   // self interaction check
-  if( thisIndex.x1 == thisIndex.x2 && thisIndex.y1 == thisIndex.y2 && thisIndex.z1 == thisIndex.z2) {
-    interact(particles, particles);
+  if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
+    calcForces(particles, particles);
     patchArray(x, y, z).receiveForces(particles);
   } else {
-    if(cellCount == 0) {
+    if (cellCount == 0) {
       bufferedX = x;
       bufferedY = y;
       bufferedZ = z;
@@ -61,7 +60,7 @@ void Compute::interact(CkVec<Particle> particles, int x, int y, int z) {
     } else if (cellCount == 1) {
       // if both particle sets are received, compute interaction
       cellCount = 0;
-      interact(bufferedParticles, particles);
+      calcForces(bufferedParticles, particles);
       patchArray(bufferedX, bufferedY, bufferedZ).receiveForces(bufferedParticles);
       patchArray(x, y, z).receiveForces(particles);
     }
@@ -69,40 +68,35 @@ void Compute::interact(CkVec<Particle> particles, int x, int y, int z) {
 }
 
 // Local function to compute all the interactions between pairs of particles in two sets
-void Compute::interact(CkVec<Particle> &first, CkVec<Particle> &second){
+void Compute::calcForces(CkVec<Particle> &first, CkVec<Particle> &second) {
   int i, j;
-  for(i = 0; i < first.length(); i++)
-    for(j = 0; j < second.length(); j++)
-      interact(first[i], second[j]);
-}
-
-// Local function for computing interaction among two particles
-// There is an extra test for interaction of identical particles, in which case there is no effect
-void Compute::interact(Particle &first, Particle &second){
   float rx, ry, rz, r, fx, fy, fz, f;
 
-  // computing base values
-  rx = first.x - second.x;
-  ry = first.y - second.y;
-  rz = first.z - second.z;
-  r = sqrt(rx*rx + ry*ry + rz*rz);
+  for(i = 0; i < first.length(); i++)
+    for(j = 0; j < second.length(); j++) {
+      // computing base values
+      rx = first[i].x - second[j].x;
+      ry = first[i].y - second[j].y;
+      rz = first[i].z - second[j].z;
+      r = sqrt(rx*rx + ry*ry + rz*rz);
 
-  // We include 0.000001 to ensure that r doesn't tend to zero in the force calculation
-  // if(r < 0.000001 || r >= DEFAULT_RADIUS)
-  if(r < 0.000001 || r >= patchSize)
-    return;
+      // We include 0.000001 to ensure that r doesn't tend to zero in the force calculation
+      // if(r < 0.000001 || r >= DEFAULT_RADIUS)
+      if(r < 0.000001 || r >= patchSize)
+	return;
 
-  f = A / pow(r,12) - B / pow(r,6);
-  fx = f * rx / r;
-  fy = f * ry / r;
-  fz = f * rz / r;
+      f = A / pow(r,12) - B / pow(r,6);
+      fx = f * rx / r;
+      fy = f * ry / r;
+      fz = f * rz / r;
 
-  // updating particle properties
-  second.fx -= fx;
-  second.fy -= fy;
-  second.fz -= fz;
-  first.fx += fx;
-  first.fy += fy;
-  first.fz += fz;
+      // updating particle properties
+      second[j].fx -= fx;
+      second[j].fy -= fy;
+      second[j].fz -= fz;
+      first[i].fx += fx;
+      first[i].fy += fy;
+      first[i].fz += fz;
+    }
 }
 
