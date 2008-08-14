@@ -51,8 +51,19 @@ Main::Main(CkArgMsg* msg) {
   delete msg;
   mainProxy = thisProxy;
 
+  int numPes = CkNumPes();
+  int currPE = -1;
+
   // initializing the 3D patch array
-  patchArray = CProxy_Patch::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
+  patchArray = CProxy_Patch::ckNew();
+
+  for (int x=0; x<patchArrayDimX; x++)
+    for (int y=0; y<patchArrayDimY; y++)
+      for (int z=0; z<patchArrayDimZ; z++)
+	patchArray(x, y, z).insert((currPE++) % numPes);
+  patchArray.doneInserting();
+
+  // patchArray = CProxy_Patch::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
   CkPrintf("%d PATCHES CREATED\n", patchArrayDimX * patchArrayDimY * patchArrayDimZ);
 
   // initializing the 6D compute array
@@ -211,7 +222,7 @@ void Patch::start() {
 }
 
 // Function to update forces coming from a compute
-void Patch::updateForces(CkVec<Particle> &updates) {
+void Patch::receiveForces(CkVec<Particle> &updates) {
   int i, x, y, z, x1, y1, z1;
 
   // incrementing the counter for receiving updates
@@ -227,8 +238,6 @@ void Patch::updateForces(CkVec<Particle> &updates) {
   // if all forces are received, then it must recompute particles location
   if (forceCount == NUM_NEIGHBORS) {
     CkVec<Particle> outgoing[NUM_NEIGHBORS];
-    for(i=0; i<NUM_NEIGHBORS; i++)
-      outgoing[i].removeAll();
 
     // Received all it's forces from the interactions.
     forceCount = 0;
@@ -254,7 +263,7 @@ void Patch::updateForces(CkVec<Particle> &updates) {
       y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
       z1 = num % NBRS_Z                       - NBRS_Z/2;
 
-      patchArray(WRAP_X(x+x1), WRAP_Y(y+y1), WRAP_Z(z+z1)).updateParticles(outgoing[num]);
+      patchArray(WRAP_X(x+x1), WRAP_Y(y+y1), WRAP_Z(z+z1)).receiveParticles(outgoing[num]);
     }
 
     updateFlag = true;
@@ -319,7 +328,7 @@ void Patch::checkNextStep(){
 
 // Function that receives a set of particles and updates the 
 // forces of them into the local set
-void Patch::updateParticles(CkVec<Particle> &updates) {
+void Patch::receiveParticles(CkVec<Particle> &updates) {
   updateCount++;
 
   for( int i=0; i < updates.length(); i++) {

@@ -50,7 +50,7 @@ void Compute::interact(CkVec<Particle> particles, int x, int y, int z) {
   // self interaction check
   if( thisIndex.x1 == thisIndex.x2 && thisIndex.y1 == thisIndex.y2 && thisIndex.z1 == thisIndex.z2) {
     interact(particles, particles);
-    patchArray(x, y, z).updateForces(particles);
+    patchArray(x, y, z).receiveForces(particles);
   } else {
     if(cellCount == 0) {
       bufferedX = x;
@@ -62,8 +62,8 @@ void Compute::interact(CkVec<Particle> particles, int x, int y, int z) {
       // if both particle sets are received, compute interaction
       cellCount = 0;
       interact(bufferedParticles, particles);
-      patchArray(bufferedX, bufferedY, bufferedZ).updateForces(bufferedParticles);
-      patchArray(x, y, z).updateForces(particles);
+      patchArray(bufferedX, bufferedY, bufferedZ).receiveForces(bufferedParticles);
+      patchArray(x, y, z).receiveForces(particles);
     }
   }
 }

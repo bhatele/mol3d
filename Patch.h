@@ -53,8 +53,8 @@ class Patch : public CBase_Patch {
 
     void start();
     void createComputes();
-    void updateParticles(CkVec<Particle> &);
-    void updateForces(CkVec<Particle> &);
+    void receiveParticles(CkVec<Particle> &);
+    void receiveForces(CkVec<Particle> &);
     void limitVelocity(Particle &p);
     Particle& wrapAround(Particle &p);
 #ifdef RUN_LIVEVIZ
