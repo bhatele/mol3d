@@ -43,6 +43,8 @@ class Patch : public CBase_Patch {
 
     void migrateToPatch(Particle p, int &px, int &py, int &pz);
     void updateProperties();	// updates properties after receiving forces from computes
+    void limitVelocity(Particle &p);
+    Particle& wrapAround(Particle &p);
     void checkNextStep();	// checks whether to continue with next step
     void print();		// prints all its particles
 
@@ -55,8 +57,6 @@ class Patch : public CBase_Patch {
     void createComputes();
     void receiveParticles(CkVec<Particle> &);
     void receiveForces(CkVec<Particle> &);
-    void limitVelocity(Particle &p);
-    Particle& wrapAround(Particle &p);
 #ifdef RUN_LIVEVIZ
     void requestNextFrame(liveVizRequestMsg *m);
 #endif
