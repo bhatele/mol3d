@@ -52,15 +52,17 @@ Main::Main(CkArgMsg* msg) {
   mainProxy = thisProxy;
 
   int numPes = CkNumPes();
-  int currPE = -1;
+  int currPe = -1, pe;
 
   // initializing the 3D patch array
   patchArray = CProxy_Patch::ckNew();
 
   for (int x=0; x<patchArrayDimX; x++)
     for (int y=0; y<patchArrayDimY; y++)
-      for (int z=0; z<patchArrayDimZ; z++)
-	patchArray(x, y, z).insert((currPE++) % numPes);
+      for (int z=0; z<patchArrayDimZ; z++) {
+	pe = (++currPe) % numPes;
+	patchArray(x, y, z).insert(pe);
+      }
   patchArray.doneInserting();
 
   // patchArray = CProxy_Patch::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
@@ -141,7 +143,7 @@ void Patch::createComputes() {
 
   // For Round Robin insertion
   int numPes = CkNumPes();
-  int currPE = CkMyPe();
+  int currPe = CkMyPe();
  
   /*  The computes X are inserted by a given patch:
    *
@@ -197,7 +199,7 @@ void Patch::createComputes() {
 
     //insert only the upper right half computes
     if (num >= NUM_NEIGHBORS/2)
-      computeArray(px1, py1, pz1, px2, py2, pz2).insert((currPE++) % numPes);
+      computeArray(px1, py1, pz1, px2, py2, pz2).insert((++currPe) % numPes);
   } // end of for loop
 
   contribute(0, 0, CkReduction::concat, CkCallback(CkIndex_Main::computeCreationDone(), mainProxy));
@@ -269,7 +271,7 @@ void Patch::receiveForces(CkVec<Particle> &updates) {
     updateFlag = true;
 	      
     // checking whether to proceed with next step
-    checkNextStep();
+    thisProxy(x, y, z).checkNextStep();
   }
   
 }

@@ -25,6 +25,7 @@ mainmodule Patch {
     entry void createComputes();
     entry void receiveForces(CkVec<Particle> particles);
     entry void receiveParticles(CkVec<Particle> updates);
+    entry [local] void checkNextStep();
     // entry void requestNextFrame(liveVizRequestMsg *m);
   };
 
