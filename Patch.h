@@ -18,12 +18,23 @@
  *
  */
 class Main : public CBase_Main {
+  private:
+    int phase;
+
   public:
     Main(CkArgMsg* msg);
     Main(CkMigrateMessage* msg);
 
     void allDone();
-    void computeCreationDone();
+    void startUpDone();
+};
+
+class ParticleDataMsg : public CMessage_ParticleDataMsg {
+  public:
+    CkVec<Particle> particles;
+    int x;
+    int y;
+    int z;
 };
 
 /** \class Patch
@@ -46,6 +57,7 @@ class Patch : public CBase_Patch {
     void limitVelocity(Particle &p);
     Particle& wrapAround(Particle &p);
     void print();		// prints all its particles
+    CProxySection_Compute mCastSecProxy;
 
   public:
     Patch();
@@ -54,6 +66,7 @@ class Patch : public CBase_Patch {
 
     void start();
     void createComputes();
+    void createSection();
     void receiveParticles(CkVec<Particle> &);
     void receiveForces(CkVec<Particle> &);
     void checkNextStep();	// checks whether to continue with next step

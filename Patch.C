@@ -18,10 +18,14 @@
 #include "Patch.decl.h"
 #include "Patch.h"
 #include "Compute.h"
+#ifdef USE_SECTION_MULTICAST
+  #include "ckmulticast.h"
+#endif
 
 /* readonly */ CProxy_Main mainProxy;
 /* readonly */ CProxy_Patch patchArray;
 /* readonly */ CProxy_Compute computeArray;
+/* readonly */ CkGroupID mCastGrpID;
 
 /* readonly */ int numParts;
 /* readonly */ int patchArrayDimX;	// Number of Chares in X
@@ -50,6 +54,7 @@ Main::Main(CkArgMsg* msg) {
 
   delete msg;
   mainProxy = thisProxy;
+  phase = 0;
 
   int numPes = CkNumPes();
   int currPe = -1, pe;
@@ -67,6 +72,11 @@ Main::Main(CkArgMsg* msg) {
 
   // patchArray = CProxy_Patch::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
   CkPrintf("%d PATCHES CREATED\n", patchArrayDimX * patchArrayDimY * patchArrayDimZ);
+
+#ifdef USE_SECTION_MULTICAST
+  // initializing the CkMulticastMgr
+  mCastGrpID = CProxy_CkMulticastMgr::ckNew();
+#endif
 
   // initializing the 6D compute array
   computeArray = CProxy_Compute::ckNew();
@@ -86,18 +96,30 @@ void Main::allDone() {
   CkExit();
 }
 
-void Main::computeCreationDone() {
-  computeArray.doneInserting();
-  CkPrintf("%d COMPUTES CREATED\n", (NUM_NEIGHBORS/2+1) * patchArrayDimX * patchArrayDimY * patchArrayDimZ);
+void Main::startUpDone() {
+  switch(phase) {
+    case 0:
+      computeArray.doneInserting();
+      CkPrintf("%d COMPUTES CREATED\n", (NUM_NEIGHBORS/2+1) * patchArrayDimX * patchArrayDimY * patchArrayDimZ);
+#ifdef USE_SECTION_MULTICAST
+      phase++;
+      patchArray.createSection();
+      break;
 
-#ifdef RUN_LIVEVIZ
-  // setup liveviz
-  CkCallback c(CkIndex_Patch::requestNextFrame(0), patchArray);
-  liveVizConfig cfg(liveVizConfig::pix_color,true);
-  liveVizInit(cfg,patchArray,c);
+    case 1:
+      CkPrintf("MULTICAST SECTIONS CREATED\n");
 #endif
 
-  patchArray.start();
+#ifdef RUN_LIVEVIZ
+      // setup liveviz
+      CkCallback c(CkIndex_Patch::requestNextFrame(0), patchArray);
+      liveVizConfig cfg(liveVizConfig::pix_color,true);
+      liveVizInit(cfg,patchArray,c);
+#endif
+
+      patchArray.start();
+      break;
+  }
 }
 
 // Default constructor
@@ -202,7 +224,23 @@ void Patch::createComputes() {
       computeArray(px1, py1, pz1, px2, py2, pz2).insert((++currPe) % numPes);
   } // end of for loop
 
-  contribute(0, 0, CkReduction::concat, CkCallback(CkIndex_Main::computeCreationDone(), mainProxy));
+  contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
+}
+
+void Patch::createSection() {
+#ifdef USE_SECTION_MULTICAST
+  CkVec<CkArrayIndex6D> elems;
+  for (int num=0; num<NUM_NEIGHBORS; num++)
+    elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
+
+  CkArrayID computeArrayID = computeArray.ckGetArrayID();
+  mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size()); 
+
+  CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+  mCastSecProxy.ckSectionDelegate(mCastGrp);
+
+  contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
+#endif
 }
 
 // Function to start interaction among particles in neighboring cells as well as its own particles
@@ -210,6 +248,11 @@ void Patch::start() {
   int x = thisIndex.x;
   int y = thisIndex.y;
   int z = thisIndex.z;
+
+#ifdef USE_SECTION_MULTICAST
+  CkPrintf("here %d %d %d\n", x, y, z);
+  mCastSecProxy.interact(particles, x, y, z);
+#else
   int px1, py1, pz1, px2, py2, pz2;
 
   for(int num=0; num<NUM_NEIGHBORS; num++) {
@@ -221,6 +264,7 @@ void Patch::start() {
     pz2 = computesList[num][5];
     computeArray(px1, py1, pz1, px2, py2, pz2).interact(particles, x, y, z);
   }
+#endif
 }
 
 // Function to update forces coming from a compute
@@ -321,7 +365,7 @@ void Patch::checkNextStep(){
     // checking for next step
     if (stepCount >= finalStepCount) {
       print();
-      contribute(0, 0, CkReduction::concat, CkCallback(CkIndex_Main::allDone(), mainProxy)); 
+      contribute(CkCallback(CkIndex_Main::allDone(), mainProxy)); 
     } else {
       thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
     }

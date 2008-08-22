@@ -3,6 +3,7 @@ mainmodule Patch {
   readonly CProxy_Main mainProxy;  
   readonly CProxy_Patch patchArray;
   readonly CProxy_Compute computeArray;
+  readonly CkGroupID mCastGrpID;
 
   readonly int numParts;	// total number of particles
   readonly int patchArrayDimX;	// X dimension of the Patch array 
@@ -16,13 +17,16 @@ mainmodule Patch {
   mainchare Main {
     entry Main(CkArgMsg* msg);
     entry void allDone();
-    entry void computeCreationDone();
+    entry void startUpDone();
   };
+
+  message ParticleDataMsg;
 
   array [3D] Patch {
     entry Patch();
     entry void start();
     entry void createComputes();
+    entry void createSection();
     entry void receiveForces(CkVec<Particle> particles);
     entry void receiveParticles(CkVec<Particle> updates);
     entry [local] void checkNextStep();
