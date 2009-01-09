@@ -29,9 +29,15 @@ class Main : public CBase_Main {
     void startUpDone();
 };
 
-class ParticleDataMsg : public CMessage_ParticleDataMsg {
+class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
   public:
-    CkVec<Particle> particles;
+    int lengthX;
+    int lengthY;
+    int lengthZ;
+    double* particleLocX;
+    double* particleLocY;
+    double* particleLocZ;
+    int lengthAll;
     int x;
     int y;
     int z;
@@ -68,7 +74,7 @@ class Patch : public CBase_Patch {
     void createComputes();
     void createSection();
     void receiveParticles(CkVec<Particle> &);
-    void receiveForces(CkVec<Particle> &);
+    void receiveForces(ParticleForceMsg *updates);
     void checkNextStep();	// checks whether to continue with next step
 #ifdef RUN_LIVEVIZ
     void requestNextFrame(liveVizRequestMsg *m);

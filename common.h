@@ -98,7 +98,7 @@ class Color {
       } else if(index % total == 3) {
 	R = 100;
 	G = 255;
-	255;
+	B = 255;
       } else if(index % total == 4) {
 	R = 100;
 	G = 255;

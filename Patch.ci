@@ -20,14 +20,24 @@ mainmodule Patch {
     entry void startUpDone();
   };
 
-  message ParticleDataMsg;
+  message ParticleDataMsg{
+    double particleLocX[];
+    double particleLocY[];
+    double particleLocZ[];
+  };
+
+  message ParticleForceMsg{
+    double forcesX[];
+    double forcesY[];
+    double forcesZ[];
+  };
 
   array [3D] Patch {
     entry Patch();
     entry void start();
     entry void createComputes();
     entry void createSection();
-    entry void receiveForces(CkVec<Particle> particles);
+    entry void receiveForces(ParticleForceMsg *updates);
     entry void receiveParticles(CkVec<Particle> updates);
     entry [local] void checkNextStep();
     // entry void requestNextFrame(liveVizRequestMsg *m);
@@ -35,7 +45,7 @@ mainmodule Patch {
 
   array [6D] Compute {
     entry Compute();
-    entry void interact(CkVec<Particle>, int x, int y, int z);
+    entry void interact(ParticleDataMsg *msg);
   };
 
 };

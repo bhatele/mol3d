@@ -248,13 +248,23 @@ void Patch::start() {
   int x = thisIndex.x;
   int y = thisIndex.y;
   int z = thisIndex.z;
-
+  int len = particles.length();
+  //CkPrintf("here %d %d %d\n", x, y, z);
+  ParticleDataMsg* msg = new (len, len, len) ParticleDataMsg;
+  msg->x = x;
+  msg->y = y;
+  msg->z = z;
+  msg->lengthAll = len;
+  for (int i = 0; i < len; i++){
+    msg->particleLocX[i] = particles[i].x;
+    msg->particleLocY[i] = particles[i].y;
+    msg->particleLocZ[i] = particles[i].z;
+  }
 #ifdef USE_SECTION_MULTICAST
-  CkPrintf("here %d %d %d\n", x, y, z);
-  mCastSecProxy.interact(particles, x, y, z);
+  mCastSecProxy.interact(msg);
 #else
   int px1, py1, pz1, px2, py2, pz2;
-
+  
   for(int num=0; num<NUM_NEIGHBORS; num++) {
     px1 = computesList[num][0];
     py1 = computesList[num][1];
@@ -262,24 +272,36 @@ void Patch::start() {
     px2 = computesList[num][3];
     py2 = computesList[num][4];
     pz2 = computesList[num][5];
-    computeArray(px1, py1, pz1, px2, py2, pz2).interact(particles, x, y, z);
+    if (num == NUM_NEIGHBORS-1)
+      computeArray(px1, py1, pz1, px2, py2, pz2).interact(msg);
+    else {
+      ParticleDataMsg* newMsg = new (len, len, len) ParticleDataMsg;
+      newMsg->x = x;
+      newMsg->y = y;
+      newMsg->z = z;
+      newMsg->lengthAll = len;
+      memcpy(newMsg->particleLocX, msg->particleLocX, len*sizeof(double));
+      memcpy(newMsg->particleLocY, msg->particleLocY, len*sizeof(double));
+      memcpy(newMsg->particleLocZ, msg->particleLocZ, len*sizeof(double));
+      computeArray(px1, py1, pz1, px2, py2, pz2).interact(newMsg);
+    }   
   }
 #endif
 }
 
 // Function to update forces coming from a compute
-void Patch::receiveForces(CkVec<Particle> &updates) {
+void Patch::receiveForces(ParticleForceMsg *updates) {
   int i, x, y, z, x1, y1, z1;
-
   // incrementing the counter for receiving updates
   forceCount++;
 
   // updating force information
-  for(i = 0; i < updates.length(); i++){
-    particles[i].fx += updates[i].fx;
-    particles[i].fy += updates[i].fy;
-    particles[i].fz += updates[i].fz;
+  for(i = 0; i < updates->lengthUpdates; i++){
+    particles[i].fx += updates->forcesX[i];
+    particles[i].fy += updates->forcesY[i];
+    particles[i].fz += updates->forcesZ[i];
   }
+  //if (stepCount == finalStepCount) CkPrintf("\nINDEXING ERROR!!! at [%d][%d][%d]\n", thisIndex.x, thisIndex.y, thisIndex.z); 
 
   // if all forces are received, then it must recompute particles location
   if (forceCount == NUM_NEIGHBORS) {
@@ -317,7 +339,6 @@ void Patch::receiveForces(CkVec<Particle> &updates) {
     // checking whether to proceed with next step
     thisProxy(x, y, z).checkNextStep();
   }
-  
 }
 
 void Patch::migrateToPatch(Particle p, int &px, int &py, int &pz) {
