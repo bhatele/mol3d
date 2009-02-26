@@ -90,7 +90,7 @@ Patch::Patch(FileDataMsg* fdmsg) {
       myNumParts++;
     }   
   }	
-  CkPrintf("Creating %d particles on Patch [%d][%d][%d]\n", myNumParts, thisIndex.x, thisIndex.y, thisIndex.z);
+  //CkPrintf("Creating %d particles on Patch [%d][%d][%d]\n", myNumParts, thisIndex.x, thisIndex.y, thisIndex.z);
 
 
   updateCount = 0;
@@ -371,7 +371,7 @@ void Patch::checkNextStep(){
 
     // checking for next step
     if (stepCount >= finalStepCount) {
-      CkPrintf("Final number of particles is %d on Patch [%d][%d][%d]\n", particles.length(), thisIndex.x, thisIndex.y, thisIndex.z);
+     // CkPrintf("Final number of particles is %d on Patch [%d][%d][%d]\n", particles.length(), thisIndex.x, thisIndex.y, thisIndex.z);
       print();
       contribute(CkCallback(CkIndex_Main::allDone(), mainProxy)); 
     } else {
