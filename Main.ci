@@ -1,0 +1,91 @@
+mainmodule Main {
+
+  readonly CProxy_Main mainProxy;  
+  readonly CProxy_Patch patchArray;
+  readonly CProxy_Compute computeArray;
+//  readonly CProxy_GridCompute gridComputeArray;
+//  readonly CProxy_PMECompositor PMECompArray;
+//  readonly CProxy_PMEDecompositor PMEDecompArray;
+  readonly CkGroupID mCastGrpID;
+
+  readonly int numParts;	// total number of particles
+  readonly int patchArrayDimX;	// X dimension of the Patch array 
+  readonly int patchArrayDimY;	// Y dimension of the Patch array
+  readonly int patchArrayDimZ;	// Y dimension of the Patch array
+  readonly int patchSize;	// size of each Patch
+  readonly int ptpCutOff;	// cut off for atom to atom forces
+  readonly int patchMargin;	// difference between patchSize and ptpCutOff
+  readonly int patchOriginX;    // X-coor of patch origin
+  readonly int patchOriginY;	// Y-coor of patch origin
+  readonly int patchOriginZ;	// Z-coor of patch origin
+  readonly int compArrayLenX;   // X dimension of Compositer array
+  readonly int compArrayLenY;   // Y dimension of Compositer array
+  readonly int compArrayLenZ;   // Z dimension of Compositer array
+  readonly int pmeGridDimX;     // X dimension of PME grid
+  readonly int pmeGridDimY;     // Y dimension of PME grid
+  readonly int pmeGridDimZ;     // Z dimension of PME grid
+  readonly BigReal pmeCellSize; // size of each grid cell of PME force grid
+  readonly int pmeCutOff;       // PME calculation cut off radius
+  readonly int migrateStepCount;// interval between patch migrations
+  readonly int finalStepCount;	// number of steps at which the cells should stop computation
+  readonly BigReal stepTime;
+  readonly BigReal timeDelta;	// real time per step
+  readonly double A;		// LJ parameter
+  readonly double B;		// LJ parameter
+  readonly bool usePairLists;	// determines whether or not to use pairlists for point to point force calculations
+
+  mainchare Main {
+    entry Main(CkArgMsg* msg);
+    entry void allDone();
+    entry void startUpDone();
+  };
+
+  message ParticleDataMsg{
+    BigReal particleLocX[];
+    BigReal particleLocY[];
+    BigReal particleLocZ[];
+    BigReal charge[];
+  };
+
+  message ParticleForceMsg{
+    BigReal forcesX[];
+    BigReal forcesY[];
+    BigReal forcesZ[];
+  };
+
+  message FileDataMsg{
+    BigReal charge[];
+    BigReal mass[];
+    BigReal coords[];
+  };
+
+//  message GCMessage{
+//    double localPmeGrid[];
+//  };
+
+  array [3D] Patch {
+    entry Patch(FileDataMsg* fdmsg);
+    entry void start();
+    entry void createComputes();
+    entry void createSection();
+    entry void receiveForces(ParticleForceMsg *updates);
+    entry void receiveParticles(CkVec<Particle> updates);
+    entry [local] void checkNextStep();
+    // entry void requestNextFrame(liveVizRequestMsg *m);
+  };
+
+  array [6D] Compute {
+    entry Compute();
+    entry void interact(ParticleDataMsg *msg);
+  };
+
+/*  array [3D] PMECompositor{
+    entry PMECompositor();
+    entry void recieveInitData(GCMessage *GCMsg);
+  };*/
+
+/*  array [3D] PMEDecompositor{
+    entry PMEDecompositor();
+    entry void recieveData(GCMessage *GCMsg);
+  };*/
+};

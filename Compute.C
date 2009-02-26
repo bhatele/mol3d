@@ -14,24 +14,27 @@
 #ifdef RUN_LIVEVIZ
   #include "liveViz.h"
 #endif
-#include "Patch.decl.h"
+#include "Main.decl.h"
 #include "Compute.h"
 #include "Patch.h"
+#include "ConfigList.h"
 
 extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Patch patchArray;
 extern /* readonly */ CProxy_Compute computeArray;
 
+extern /* readonly */ bool usePairLists;
 extern /* readonly */ int numParts;
 extern /* readonly */ int patchArrayDimX;	// Number of Chare Rows
 extern /* readonly */ int patchArrayDimY;	// Number of Chare Columns
+extern /* readonly */ int patchArrayDimZ;
 extern /* readonly */ int patchSize;
-extern /* readonly */ double radius;
+extern /* readonly */ int ptpCutOff;
 extern /* readonly */ int finalStepCount; 
-extern /* readonly */ double stepTime; 
+extern /* readonly */ BigReal stepTime; 
 
-extern double A;			// Force Calculation parameter 1
-extern double B;			// Force Calculation parameter 2
+extern /* readonly */ double A;			// Force Calculation parameter 1
+extern /* readonly */ double B;			// Force Calculation parameter 2
 
 // Compute - Default constructor
 Compute::Compute() {
@@ -46,10 +49,7 @@ void Compute::interact(ParticleDataMsg *msg){
 
   // self interaction check
   if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
-    //for (int i = 0; i < msg->lengthAll; i++){
-    //  CkPrintf("post loc = %f ",msg->particleLocX[i]);
-    //}
-    calcForces(msg, msg, true);
+    calcInternalForces(msg);
   } else {
     if (cellCount == 0) {
       bufferedMsg = msg;
@@ -57,80 +57,247 @@ void Compute::interact(ParticleDataMsg *msg){
     } else if (cellCount == 1) {
       // if both particle sets are received, compute interaction
       cellCount = 0;
-      calcForces(bufferedMsg, msg, false);
+      if (usePairLists){
+	if (bufferedMsg->lengthAll <= msg->lengthAll)
+	  calcPairForcesPL(bufferedMsg, msg);
+	else
+	  calcPairForcesPL(msg, bufferedMsg);
+      }
+      else {
+	if (bufferedMsg->lengthAll <= msg->lengthAll)
+          calcPairForces(bufferedMsg, msg);
+	else
+	  calcPairForces(msg, bufferedMsg);
+      }
     }
   }
 }
 
-// Local function to compute all the interactions between pairs of particles in two sets
-void Compute::calcForces(ParticleDataMsg* first, ParticleDataMsg* second, bool bSame) {
-  int i, j;
+//calculate pair forces using pairlists
+void Compute::calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second) {
+  int i, j, jpart, ptpCutOffSqd, diff;
   int firstLen = first->lengthAll;
   int secondLen = second->lengthAll;
-  double rx, ry, rz, r, fx, fy, fz, f;
+  BigReal powTwenty, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr, eField, constants;
+  double rSix, rTwelve;
   ParticleForceMsg *firstmsg = new (firstLen, firstLen, firstLen) ParticleForceMsg;
-  ParticleForceMsg *secondmsg;
-  if (bSame)
-    secondmsg = firstmsg;
-  else
-    secondmsg = new (secondLen, secondLen, secondLen) ParticleForceMsg;
- // CkPrintf("firstlen = %d, secondlen = %d \n", firstLen, secondLen);
+  ParticleForceMsg *secondmsg = new (secondLen, secondLen, secondLen) ParticleForceMsg;
   firstmsg->lengthUpdates = firstLen;
   secondmsg->lengthUpdates = secondLen;
-  for(i = 0; i < firstLen; i++){
-    for(j = 0; j < secondLen; j++) {
-      //CkPrintf("(%lf)(%lf) ",first->particleLocX[i],second->particleLocX[j]); 
-      // computing base values
-      rx = first->particleLocX[i] - second->particleLocX[j];
-      ry = first->particleLocY[i] - second->particleLocY[j];
-      rz = first->particleLocZ[i] - second->particleLocZ[j];
-      r = sqrt(rx*rx + ry*ry + rz*rz);
-      // We include 0.000001 to ensure that r doesn't tend to zero in the force calculation
-      //if(r < 0.000001 || r >= patchSize) CkPrintf(" radii was OB ");
-      if(r >= 0.000001 && r < patchSize){
-        f = A / pow(r,12) - B / pow(r,6);
-	//CkPrintf("force = %f ", f);
-        fx = f * rx / r;
-        fy = f * ry / r;
-        fz = f * rz / r;
-        if (i == 0){
-  	  secondmsg->forcesX[j] = -fx;
-  	  secondmsg->forcesY[j] = -fy;
-	  secondmsg->forcesZ[j] = -fz;
-        }
-        else{
-	  secondmsg->forcesX[j] -= fx;
-	  secondmsg->forcesY[j] -= fy;
-	  secondmsg->forcesZ[j] -= fz;
-        }
+  //check for wrap around and adjust locations accordingly
+  if (abs(first->x - second->x) > 1){
+    diff = patchSize * patchArrayDimX;
+    if (second->x < first->x)
+      diff = -1 * diff; 
+    for (i = 0; i < firstLen; i++)
+      first->particleLocX[i] += diff;
+  }
+  if (abs(first->y - second->y) > 1){
+    diff = patchSize * patchArrayDimY;
+    if (second->y < first->y)
+      diff = -1 * diff; 
+    for (i = 0; i < firstLen; i++)
+      first->particleLocY[i] += diff;
+  }
+  if (abs(first->z - second->z) > 1){
+    diff = patchSize * patchArrayDimZ;
+    if (second->z < first->z)
+      diff = -1 * diff; 
+    for (i = 0; i < firstLen; i++)
+      first->particleLocZ[i] += diff;
+  } 
+  ptpCutOffSqd = ptpCutOff * ptpCutOff;
+  powTwenty = pow(10, -20);
 
-        if (j == 0){
-	  firstmsg->forcesX[i] = fx;
-	  firstmsg->forcesY[i] = fy;
-	  firstmsg->forcesZ[i] = fz;
-        }
-        else{
-	  firstmsg->forcesX[i] += fx;
-	  firstmsg->forcesY[i] += fy;
-	  firstmsg->forcesZ[i] += fz;
-        }
+  //check if pairlist needs to be updated
+  if (first->updateList){
+    pairList = new CkVec<int>[firstLen];
+    for (i = 0; i < firstLen; i++){
+      for (j = 0; j < secondLen; j++){
+        rx = first->particleLocX[i] - second->particleLocX[j];
+        ry = first->particleLocY[i] - second->particleLocY[j];
+        rz = first->particleLocZ[i] - second->particleLocZ[j];
+	rsqd = rx*rx + ry*ry + rz*rz;
+	if (rsqd >= 0.001 && rsqd < ptpCutOffSqd)
+	  pairList[i].push_back(j);
       }
-      else {
-        if (i == 0){
-          secondmsg->forcesX[j] = 0;
-          secondmsg->forcesY[j] = 0;
-          secondmsg->forcesZ[j] = 0;
-        }
-        if (j == 0){
-          firstmsg->forcesX[i] = 0;
-          firstmsg->forcesY[i] = 0;
-          firstmsg->forcesZ[i] = 0;
-        }
+    }
+  }
+
+  constants = COULOMBS_CONSTANT * ELECTRON_CHARGE * ELECTRON_CHARGE;
+ 
+  memset(firstmsg->forcesX, 0, firstLen * sizeof(BigReal));
+  memset(firstmsg->forcesY, 0, firstLen * sizeof(BigReal));
+  memset(firstmsg->forcesZ, 0, firstLen * sizeof(BigReal));
+  memset(secondmsg->forcesX, 0, secondLen * sizeof(BigReal));
+  memset(secondmsg->forcesY, 0, secondLen * sizeof(BigReal));
+  memset(secondmsg->forcesZ, 0, secondLen * sizeof(BigReal));
+  for(i = 0; i < firstLen; i++){
+    eField = first->charge[i];
+    for(j = 0; j < pairList[i].length(); j++) {
+      jpart = pairList[i][j];
+      rx = first->particleLocX[i] - second->particleLocX[jpart];
+      ry = first->particleLocY[i] - second->particleLocY[jpart];
+      rz = first->particleLocZ[i] - second->particleLocZ[jpart];
+      rsqd = rx*rx + ry*ry + rz*rz;
+      if (rsqd >= 0.001){
+	rsqd = rsqd * powTwenty;
+	r = sqrt(rsqd);
+	rSix = ((double)rsqd) * rsqd * rsqd;
+	rTwelve = rSix * rSix;
+	//CkPrintf("rsqd = %E, rsix = %E, rtwelve = %E\n", rsqd, rSix, rTwelve);
+        f = (BigReal)(A / rTwelve - B / rSix);
+	//CkPrintf("%E \n\n", f);
+	f -= eField * constants * second->charge[jpart] / rsqd;
+	//CkPrintf("%E \n", f);
+	fr = f /r;
+	fx = rx * fr;
+	fy = ry * fr;
+	fz = rz * fr;
+	secondmsg->forcesX[jpart] -= fx;
+	secondmsg->forcesY[jpart] -= fy;
+	secondmsg->forcesZ[jpart] -= fz;
+	firstmsg->forcesX[i] += fx;
+	firstmsg->forcesY[i] += fy;
+	firstmsg->forcesZ[i] += fz;
       }
     }
   }
   patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
-  if (!bSame)
-    patchArray(second->x, second->y, second->z).receiveForces(secondmsg);
+  patchArray(second->x, second->y, second->z).receiveForces(secondmsg);
+  if (first->deleteList){
+    for (i = 0; i < firstLen; i++){
+      pairList[i].removeAll();
+    }
+    delete [] pairList;
+  }
+  delete first;
+  delete second;
+}
+
+//calculate pair forces without using pairlists
+void Compute::calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second) {
+  int i, j, jpart, ptpCutOffSqd, diff;
+  int firstLen = first->lengthAll;
+  int secondLen = second->lengthAll;
+  BigReal powTwenty, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr, eField, constants;
+  double rSix, rTwelve;
+  ParticleForceMsg *firstmsg = new (firstLen, firstLen, firstLen) ParticleForceMsg;
+  ParticleForceMsg *secondmsg = new (secondLen, secondLen, secondLen) ParticleForceMsg;
+  firstmsg->lengthUpdates = firstLen;
+  secondmsg->lengthUpdates = secondLen;
+  //check for wrap around and adjust locations accordingly
+  if (abs(first->x - second->x) > 1){
+    diff = patchSize * patchArrayDimX;
+    if (second->x < first->x)
+      diff = -1 * diff; 
+    for (i = 0; i < firstLen; i++)
+      first->particleLocX[i] += diff;
+  }
+  if (abs(first->y - second->y) > 1){
+    diff = patchSize * patchArrayDimY;
+    if (second->y < first->y)
+      diff = -1 * diff; 
+    for (i = 0; i < firstLen; i++)
+      first->particleLocY[i] += diff;
+  }
+  if (abs(first->z - second->z) > 1){
+    diff = patchSize * patchArrayDimZ;
+    if (second->z < first->z)
+      diff = -1 * diff; 
+    for (i = 0; i < firstLen; i++)
+      first->particleLocZ[i] += diff;
+  } 
+  ptpCutOffSqd = ptpCutOff * ptpCutOff;
+  powTwenty = pow(10, -20);
+  constants = COULOMBS_CONSTANT * ELECTRON_CHARGE * ELECTRON_CHARGE;
+ 
+  memset(firstmsg->forcesX, 0, firstLen * sizeof(BigReal));
+  memset(firstmsg->forcesY, 0, firstLen * sizeof(BigReal));
+  memset(firstmsg->forcesZ, 0, firstLen * sizeof(BigReal));
+  memset(secondmsg->forcesX, 0, secondLen * sizeof(BigReal));
+  memset(secondmsg->forcesY, 0, secondLen * sizeof(BigReal));
+  memset(secondmsg->forcesZ, 0, secondLen * sizeof(BigReal));
+  for(i = 0; i < firstLen; i++){
+    eField = first->charge[i];
+    for(jpart = 0; jpart < secondLen; jpart++){
+      rx = first->particleLocX[i] - second->particleLocX[jpart];
+      ry = first->particleLocY[i] - second->particleLocY[jpart];
+      rz = first->particleLocZ[i] - second->particleLocZ[jpart];
+      rsqd = rx*rx + ry*ry + rz*rz;
+      if (rsqd >= 0.001 && rsqd < ptpCutOffSqd){
+	rsqd = rsqd * powTwenty;
+	r = sqrt(rsqd);
+	rSix = ((double)rsqd) * rsqd * rsqd;
+	rTwelve = rSix * rSix;
+        f = (BigReal)(A / rTwelve - B / rSix);
+	f -= eField * constants * second->charge[jpart] / rsqd;
+	fr = f /r;
+	fx = rx * fr;
+	fy = ry * fr;
+	fz = rz * fr;
+	secondmsg->forcesX[jpart] -= fx;
+	secondmsg->forcesY[jpart] -= fy;
+	secondmsg->forcesZ[jpart] -= fz;
+	firstmsg->forcesX[i] += fx;
+	firstmsg->forcesY[i] += fy;
+	firstmsg->forcesZ[i] += fz;
+      }
+    }
+  }
+  patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
+  patchArray(second->x, second->y, second->z).receiveForces(secondmsg);
+  delete first;
+  delete second;
+}
+
+// Local function to compute all the interactions between pairs of particles in two sets
+void Compute::calcInternalForces(ParticleDataMsg* first) {
+  int i, j, ptpCutOffSqd;
+  int firstLen = first->lengthAll;
+  BigReal powTwenty, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr, eField, constants;
+  double rSix, rTwelve;
+  ParticleForceMsg *firstmsg = new (firstLen, firstLen, firstLen) ParticleForceMsg;
+  firstmsg->lengthUpdates = firstLen;
+    
+  constants = COULOMBS_CONSTANT * ELECTRON_CHARGE * ELECTRON_CHARGE;
+  
+  memset(firstmsg->forcesX, 0, firstLen * sizeof(BigReal));
+  memset(firstmsg->forcesY, 0, firstLen * sizeof(BigReal));
+  memset(firstmsg->forcesZ, 0, firstLen * sizeof(BigReal));
+  ptpCutOffSqd = ptpCutOff * ptpCutOff;
+  powTwenty = pow(10, -20);
+  for(i = 0; i < firstLen; i++){
+    eField = first->charge[i];
+    for(j = i+1; j < firstLen; j++) {
+      // computing base values
+      rx = first->particleLocX[i] - first->particleLocX[j];
+      ry = first->particleLocY[i] - first->particleLocY[j];
+      rz = first->particleLocZ[i] - first->particleLocZ[j];
+      rsqd = rx*rx + ry*ry + rz*rz;
+      //check if r >= .000001 to make sure force calc doesnt tend to 0
+      if(rsqd >= 0.001 && rsqd < ptpCutOffSqd){
+	rsqd = rsqd * powTwenty;
+	r = sqrt(rsqd);
+	rSix = ((double)rsqd) * rsqd * rsqd;
+	rTwelve = rSix * rSix;
+        f = (BigReal)(A / rTwelve - B / rSix);
+	f -= eField * constants * first->charge[j] / (rsqd);
+        
+	fr = f /r;
+	fx = rx * fr;
+        fy = ry * fr;
+        fz = rz * fr;
+	firstmsg->forcesX[j] -= fx;
+	firstmsg->forcesY[j] -= fy;
+	firstmsg->forcesZ[j] -= fz;
+	firstmsg->forcesX[i] += fx;
+	firstmsg->forcesY[i] += fy;
+	firstmsg->forcesZ[i] += fz;
+      }
+    }
+  }
+  patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
+  delete first;
 }
 

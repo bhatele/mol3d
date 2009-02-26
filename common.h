@@ -15,17 +15,40 @@
 
 #include "pup.h"
 
-#define DEFAULT_MASS		1
-#define DEFAULT_DELTA		0.005
-#define DEFAULT_PARTICLES	2000
+typedef float BigReal;
+
+#define AVAGADROS_NUMBER        (6.022141 * pow(10,23))
+#define COULOMBS_CONSTANT       (8.987551 * pow(10,-9))
+#define ELECTRON_CHARGE         (1.602176 * pow(10,-19))
+
+#define USE_PAIRLISTS		true
+
+#define STRUCTURE_FILENAME	"iapp.js"
+
+#define DEFAULT_DELTA		1 // in femtoseconds
 
 #define PATCHARRAY_DIM_X	3
 #define PATCHARRAY_DIM_Y	3
 #define PATCHARRAY_DIM_Z	3
-#define PATCH_SIZE		1
+#define PTP_CUT_OFF		13  //Rc in NAMD, cut off for atom to atom interactions
+#define PATCH_MARGIN		0  //constant difference between cut off and patch size
+#define PATCH_SIZE		(PTP_CUT_OFF + PATCH_MARGIN)
+#define PATCH_ORIGIN_X		0
+#define PATCH_ORIGIN_Y		0
+#define PATCH_ORIGIN_Z		0
 
-#define DEFAULT_RADIUS		2
-#define DEFAULT_FINALSTEPCOUNT	21
+#define COMPARRAY_LEN_X         3
+#define COMPARRAY_LEN_Y         3        
+#define COMPARRAY_LEN_Z         3        
+
+#define PMEGRID_DIM_X           30
+#define PMEGRID_DIM_Y           30       //must be a multiple of CompArray and PatchArray dimensions
+#define PMEGRID_DIM_Z           30
+#define PME_CELL_SIZE           (PATCH_SIZE / (PMEGRID_DIM_X / PATCHARRAY_DIM_X)) //assumes cubic patch array  (careful with rounding)
+#define PME_CUT_OFF             PATCH_SIZE
+
+#define MIGRATE_STEPCOUNT	20
+#define DEFAULT_FINALSTEPCOUNT	2001
 #define MAX_VELOCITY		30.0
 
 #define KAWAY_X			1
@@ -44,22 +67,23 @@
 class Particle {
   public:
     int id;
-    double mass;	// mass of the particle
-    double x;		// position in x axis
-    double y;		// position in y axis
-    double z;		// position in z axis
+    BigReal mass;	// mass of the particle
+    BigReal charge;     // charge of particle
+    BigReal x;		// position in x axis
+    BigReal y;		// position in y axis
+    BigReal z;		// position in z axis
 
-    double fx;		// total forces on x axis
-    double fy;		// total forces on y axis
-    double fz;		// total forces on z axis
+    BigReal fx;		// total forces on x axis
+    BigReal fy;		// total forces on y axis
+    BigReal fz;		// total forces on z axis
 
-    double ax;		// acceleration on x axis
-    double ay;		// acceleration on y axis
-    double az;		// acceleration on z axis
+    BigReal ax;		// acceleration on x axis
+    BigReal ay;		// acceleration on y axis
+    BigReal az;		// acceleration on z axis
 
-    double vx;		// velocity on x axis
-    double vy;		// velocity on y axis
-    double vz;		// velocity on z axis
+    BigReal vx;		// velocity on x axis
+    BigReal vy;		// velocity on y axis
+    BigReal vz;		// velocity on z axis
 
     // Default constructor
     Particle() {
@@ -68,7 +92,7 @@ class Particle {
 
     // Function for pupping properties
     void pup(PUP::er &p) {
-      p | id; p | mass;
+      p | id; p | mass; p | charge;
       p | x;  p | y;  p | z;
       p | fx; p | fy; p | fz;
       p | ax; p | ay; p | az;

@@ -14,33 +14,27 @@
 #ifndef __PATCH_H__
 #define __PATCH_H__
 
-/** \class Main
- *
- */
-class Main : public CBase_Main {
-  private:
-    int phase;
-
-  public:
-    Main(CkArgMsg* msg);
-    Main(CkMigrateMessage* msg);
-
-    void allDone();
-    void startUpDone();
-};
 
 class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
   public:
-    int lengthX;
-    int lengthY;
-    int lengthZ;
-    double* particleLocX;
-    double* particleLocY;
-    double* particleLocZ;
+    BigReal* particleLocX;
+    BigReal* particleLocY;
+    BigReal* particleLocZ;
+    BigReal* charge;
     int lengthAll;
     int x;
     int y;
     int z;
+    bool updateList;
+    bool deleteList;
+};
+
+class FileDataMsg : public CMessage_FileDataMsg {
+  public:
+    BigReal* charge;
+    BigReal* mass;
+    BigReal* coords; //encoded as x1 y1 z1 x2 y2 z2...
+    int length;
 };
 
 /** \class Patch
@@ -54,10 +48,12 @@ class Patch : public CBase_Patch {
     int forceCount;		// to count the returns from interactions
     int stepCount;		// to count the number of steps, and decide when to stop
     int updateCount;
+    int myNumParts;
     bool updateFlag;
     bool incomingFlag;
     int computesList[NUM_NEIGHBORS][6];
-
+    
+ 
     void migrateToPatch(Particle p, int &px, int &py, int &pz);
     void updateProperties();	// updates properties after receiving forces from computes
     void limitVelocity(Particle &p);
@@ -66,7 +62,7 @@ class Patch : public CBase_Patch {
     CProxySection_Compute mCastSecProxy;
 
   public:
-    Patch();
+    Patch(FileDataMsg *fdmsg);
     Patch(CkMigrateMessage *msg);
     ~Patch();
 

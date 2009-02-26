@@ -20,9 +20,9 @@ class ParticleForceMsg : public CMessage_ParticleForceMsg {
     int lengthX;
     int lengthY;
     int lengthZ;
-    double* forcesX;
-    double* forcesY;
-    double* forcesZ;
+    BigReal* forcesX;
+    BigReal* forcesY;
+    BigReal* forcesZ;
     int lengthUpdates;
 };
 
@@ -31,16 +31,17 @@ class Compute : public CBase_Compute {
   private:
     int cellCount;  // to count the number of interact() calls
     ParticleDataMsg *bufferedMsg;
-
-//    void interact(CkVec<Particle> &first, CkVec<Particle> &second);
-//    void interact(Particle &first, Particle &second);
+    CkVec<int> *pairList;
 
   public:
     Compute();
     Compute(CkMigrateMessage *msg);
 
     void interact(ParticleDataMsg *msg);
-    void calcForces(ParticleDataMsg* first, ParticleDataMsg* second, bool bSame);
+    void calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second);
+    void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second);
+    void calcInternalForces(ParticleDataMsg* first);
+           
 };
 
 #endif

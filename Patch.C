@@ -15,132 +15,83 @@
 #ifdef RUN_LIVEVIZ
   #include "liveViz.h"
 #endif
-#include "Patch.decl.h"
+#include "Main.decl.h"
+#include "Main.h"
 #include "Patch.h"
 #include "Compute.h"
+#include "ConfigList.h"
+#include "molfile_plugin.h"
+#include "PluginIOMgr.h"
 #ifdef USE_SECTION_MULTICAST
   #include "ckmulticast.h"
 #endif
 
-/* readonly */ CProxy_Main mainProxy;
-/* readonly */ CProxy_Patch patchArray;
-/* readonly */ CProxy_Compute computeArray;
-/* readonly */ CkGroupID mCastGrpID;
+  
+extern /* readonly */ CProxy_Main mainProxy;
+extern /* readonly */ CProxy_Patch patchArray;
+extern /* readonly */ CProxy_Compute computeArray;
+//extern /* readonly */ CProxy_GridCompute gridComputeArray;
+//extern /* readonly */ CProxy_PMECompositor PMECompArray;
+//extern /* readonly */ CProxy_PMEDecompositor PMEDecompArray;
+extern /* readonly */ CkGroupID mCastGrpID;
 
-/* readonly */ int numParts;
-/* readonly */ int patchArrayDimX;	// Number of Chares in X
-/* readonly */ int patchArrayDimY;	// Number of Chares in Y
-/* readonly */ int patchArrayDimZ;	// Number of Chares in Z
-/* readonly */ int patchSize; 
-/* readonly */ double radius;
-/* readonly */ int finalStepCount; 
-/* readonly */ double stepTime; 
+extern /* readonly */ int numParts;
+extern /* readonly */ int patchArrayDimX;	// Number of Chares in X
+extern /* readonly */ int patchArrayDimY;	// Number of Chares in Y
+extern /* readonly */ int patchArrayDimZ;	// Number of Chares in Z
+extern /* readonly */ int patchSize;
+extern /* readonly */ int ptpCutOff;
+extern /* readonly */ int patchMargin;
+extern /* readonly */ int patchOriginX;
+extern /* readonly */ int patchOriginY;
+extern /* readonly */ int patchOriginZ;
+extern /* readonly */ int compArrayLenX;
+extern /* readonly */ int compArrayLenY;
+extern /* readonly */ int compArrayLenZ;
+extern /* readonly */ int pmeGridDimX;
+extern /* readonly */ int pmeGridDimY;
+extern /* readonly */ int pmeGridDimZ;
+extern /* readonly */ BigReal pmeCellSize;
+extern /* readonly */ int pmeCutOff;
+extern /* readonly */ int migrateStepCount;
+extern /* readonly */ int finalStepCount; 
+extern /* readonly */ BigReal stepTime; 
+extern /* readonly */ BigReal timeDelta;
+extern /* readonly */ bool usePairLists;
 
-double A = 2.0;			// Force Calculation parameter 1
-double B = 1.0;			// Force Calculation parameter 2
-
-// Entry point of Charm++ application
-Main::Main(CkArgMsg* msg) {
-  stepTime = CmiWallTimer();
-  CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS RUNNING ...\n");
-
-  numParts = DEFAULT_PARTICLES;
-  patchArrayDimX = PATCHARRAY_DIM_X;
-  patchArrayDimY = PATCHARRAY_DIM_Y;
-  patchArrayDimZ = PATCHARRAY_DIM_Z;
-  patchSize = PATCH_SIZE;
-  radius = DEFAULT_RADIUS;
-  finalStepCount = DEFAULT_FINALSTEPCOUNT;
-
-  delete msg;
-  mainProxy = thisProxy;
-  phase = 0;
-
-  int numPes = CkNumPes();
-  int currPe = -1, pe;
-
-  // initializing the 3D patch array
-  patchArray = CProxy_Patch::ckNew();
-
-  for (int x=0; x<patchArrayDimX; x++)
-    for (int y=0; y<patchArrayDimY; y++)
-      for (int z=0; z<patchArrayDimZ; z++) {
-	pe = (++currPe) % numPes;
-	patchArray(x, y, z).insert(pe);
-      }
-  patchArray.doneInserting();
-
-  // patchArray = CProxy_Patch::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
-  CkPrintf("%d PATCHES CREATED\n", patchArrayDimX * patchArrayDimY * patchArrayDimZ);
-
-#ifdef USE_SECTION_MULTICAST
-  // initializing the CkMulticastMgr
-  mCastGrpID = CProxy_CkMulticastMgr::ckNew();
-#endif
-
-  // initializing the 6D compute array
-  computeArray = CProxy_Compute::ckNew();
- 
-  for (int x=0; x<patchArrayDimX; x++)
-    for (int y=0; y<patchArrayDimY; y++)
-      for (int z=0; z<patchArrayDimZ; z++)
-	patchArray(x, y, z).createComputes();
-
-}
-
-// Constructor for chare object migration
-Main::Main(CkMigrateMessage* msg) { }
-
-void Main::allDone() {
-  CkPrintf("SIMULATION COMPLETE.\n\n");
-  CkExit();
-}
-
-void Main::startUpDone() {
-  switch(phase) {
-    case 0:
-      computeArray.doneInserting();
-      CkPrintf("%d COMPUTES CREATED\n", (NUM_NEIGHBORS/2+1) * patchArrayDimX * patchArrayDimY * patchArrayDimZ);
-#ifdef USE_SECTION_MULTICAST
-      phase++;
-      patchArray.createSection();
-      break;
-
-    case 1:
-      CkPrintf("MULTICAST SECTIONS CREATED\n");
-#endif
-
-#ifdef RUN_LIVEVIZ
-      // setup liveviz
-      CkCallback c(CkIndex_Patch::requestNextFrame(0), patchArray);
-      liveVizConfig cfg(liveVizConfig::pix_color,true);
-      liveVizInit(cfg,patchArray,c);
-#endif
-
-      patchArray.start();
-      break;
-  }
-}
+extern /* readonly */ double A;
+extern /* readonly */ double B;
 
 // Default constructor
-Patch::Patch() {
+Patch::Patch(FileDataMsg* fdmsg) {
   int i;
 
-  // starting random generator
-  srand48( thisIndex.x*1000 + thisIndex.y*100 + thisIndex.z*10 + time(NULL));
-
   // Particle initialization
-  for(i=0; i < numParts/(patchArrayDimX*patchArrayDimY*patchArrayDimZ); i++) {
-    particles.push_back(Particle());
+  myNumParts = 0;
+  for(i=0; i < numParts; i++) {
+    if (((int)((fdmsg->coords[3*i] - patchOriginX) / patchSize)) == thisIndex.x && ((int)((fdmsg->coords[3*i+1]-patchOriginY) / patchSize)) == thisIndex.y
+	&& ((int)((fdmsg->coords[3*i+2]-patchOriginZ) / patchSize)) == thisIndex.z) {
+      particles.push_back(Particle());
+      particles[myNumParts].charge = fdmsg->charge[i];
+      particles[myNumParts].mass = fdmsg->mass[i];
 
-    particles[i].x = drand48() * patchSize + thisIndex.x * patchSize;
-    particles[i].y = drand48() * patchSize + thisIndex.y * patchSize;
-    particles[i].z = drand48() * patchSize + thisIndex.z * patchSize;
-    particles[i].vx = (drand48() - 0.5) * .2 * MAX_VELOCITY;
-    particles[i].vy = (drand48() - 0.5) * .2 * MAX_VELOCITY;
-    particles[i].vz = (drand48() - 0.5) * .2 * MAX_VELOCITY;
-    particles[i].id = (thisIndex.x*patchArrayDimX + thisIndex.y) * numParts / (patchArrayDimX*patchArrayDimY)  + i;
+      particles[myNumParts].x = fdmsg->coords[3*i];
+      particles[myNumParts].y = fdmsg->coords[3*i+1];
+      particles[myNumParts].z = fdmsg->coords[3*i+2];
+
+      particles[myNumParts].vx = 0;
+      particles[myNumParts].vy = 0;
+      particles[myNumParts].vz = 0;
+      particles[myNumParts].fx = 0;
+      particles[myNumParts].fy = 0;
+      particles[myNumParts].fz = 0;
+     
+      particles[myNumParts].id = (thisIndex.x*patchArrayDimX + thisIndex.y) * numParts / (patchArrayDimX*patchArrayDimY)  + i;
+      myNumParts++;
+    }   
   }	
+  CkPrintf("Creating %d particles on Patch [%d][%d][%d]\n", myNumParts, thisIndex.x, thisIndex.y, thisIndex.z);
+
 
   updateCount = 0;
   forceCount = 0;
@@ -148,12 +99,14 @@ Patch::Patch() {
   updateFlag = false;
   incomingFlag = false;
   incomingParticles.resize(0);
+  delete fdmsg;
 }
 
 // Constructor for chare object migration
 Patch::Patch(CkMigrateMessage *msg) { }  
                                        
 Patch::~Patch() {}
+
 
 void Patch::createComputes() {
   int num;  
@@ -249,16 +202,29 @@ void Patch::start() {
   int y = thisIndex.y;
   int z = thisIndex.z;
   int len = particles.length();
-  //CkPrintf("here %d %d %d\n", x, y, z);
-  ParticleDataMsg* msg = new (len, len, len) ParticleDataMsg;
+  
+  ParticleDataMsg* msg = new (len, len, len, len) ParticleDataMsg;
   msg->x = x;
   msg->y = y;
   msg->z = z;
   msg->lengthAll = len;
+  // If using pairlists determine whether or not its time to update the pairlist
+  if (usePairLists){
+    msg->deleteList = false;
+    if (stepCount == 0 || ((stepCount % migrateStepCount == 1) && stepCount > 1)){
+      msg->updateList = true;
+    }
+    else{
+      msg->updateList = false;
+      if (stepCount % migrateStepCount == 0)
+	msg->deleteList = true;
+    }
+  }
   for (int i = 0; i < len; i++){
     msg->particleLocX[i] = particles[i].x;
     msg->particleLocY[i] = particles[i].y;
     msg->particleLocZ[i] = particles[i].z;
+    msg->charge[i] = particles[i].charge;
   }
 #ifdef USE_SECTION_MULTICAST
   mCastSecProxy.interact(msg);
@@ -275,16 +241,21 @@ void Patch::start() {
     if (num == NUM_NEIGHBORS-1)
       computeArray(px1, py1, pz1, px2, py2, pz2).interact(msg);
     else {
-      ParticleDataMsg* newMsg = new (len, len, len) ParticleDataMsg;
+      ParticleDataMsg* newMsg = new (len, len, len, len) ParticleDataMsg;
       newMsg->x = x;
       newMsg->y = y;
       newMsg->z = z;
       newMsg->lengthAll = len;
-      memcpy(newMsg->particleLocX, msg->particleLocX, len*sizeof(double));
-      memcpy(newMsg->particleLocY, msg->particleLocY, len*sizeof(double));
-      memcpy(newMsg->particleLocZ, msg->particleLocZ, len*sizeof(double));
+      if (usePairLists){
+	newMsg->updateList = msg->updateList;
+	newMsg->deleteList = msg->deleteList;
+      }
+      memcpy(newMsg->particleLocX, msg->particleLocX, len*sizeof(BigReal));
+      memcpy(newMsg->particleLocY, msg->particleLocY, len*sizeof(BigReal));
+      memcpy(newMsg->particleLocZ, msg->particleLocZ, len*sizeof(BigReal));
+      memcpy(newMsg->charge, msg->charge, len*sizeof(BigReal));
       computeArray(px1, py1, pz1, px2, py2, pz2).interact(newMsg);
-    }   
+    } 
   }
 #endif
 }
@@ -301,7 +272,6 @@ void Patch::receiveForces(ParticleForceMsg *updates) {
     particles[i].fy += updates->forcesY[i];
     particles[i].fz += updates->forcesZ[i];
   }
-  //if (stepCount == finalStepCount) CkPrintf("\nINDEXING ERROR!!! at [%d][%d][%d]\n", thisIndex.x, thisIndex.y, thisIndex.z); 
 
   // if all forces are received, then it must recompute particles location
   if (forceCount == NUM_NEIGHBORS) {
@@ -317,36 +287,43 @@ void Patch::receiveForces(ParticleForceMsg *updates) {
     x = thisIndex.x;
     y = thisIndex.y;
     z = thisIndex.z;
+    if (stepCount > 0 && (stepCount % migrateStepCount) == 0){
+      for(i=0; i<particles.length(); i++) {
+	migrateToPatch(particles[i], x1, y1, z1);
+	if(x1 !=0 || y1!=0 || z1 !=0) {
+//	  CkPrintf("PARTICLE MIGRATING!\n");
+	  outgoing[(x1+1)*NBRS_Y*NBRS_Z + (y1+1)*NBRS_Z + (z1+1)].push_back(wrapAround(particles[i]));
+	  particles.remove(i);
+	}
+      }
+    
+   
+      for(int num=0; num<NUM_NEIGHBORS; num++) {
+	x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
+	y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
+	z1 = num % NBRS_Z                       - NBRS_Z/2;
 
-    for(i=0; i<particles.length(); i++) {
-      migrateToPatch(particles[i], x1, y1, z1);
-      if(x1 !=0 || y1!=0 || z1 !=0) {
-	outgoing[(x1+1)*NBRS_Y*NBRS_Z + (y1+1)*NBRS_Z + (z1+1)].push_back(wrapAround(particles[i]));
-	particles.remove(i);
+	patchArray(WRAP_X(x+x1), WRAP_Y(y+y1), WRAP_Z(z+z1)).receiveParticles(outgoing[num]);
       }
     }
-   
-    for(int num=0; num<NUM_NEIGHBORS; num++) {
-      x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
-      y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
-      z1 = num % NBRS_Z                       - NBRS_Z/2;
-
-      patchArray(WRAP_X(x+x1), WRAP_Y(y+y1), WRAP_Z(z+z1)).receiveParticles(outgoing[num]);
-    }
+    else
+      incomingFlag = true;
 
     updateFlag = true;
 	      
     // checking whether to proceed with next step
     thisProxy(x, y, z).checkNextStep();
   }
+
+  delete updates;
 }
 
 void Patch::migrateToPatch(Particle p, int &px, int &py, int &pz) {
   // currently this is assuming that particles are
   // migrating only to the immediate neighbors
-  int x = thisIndex.x * patchSize;
-  int y = thisIndex.y * patchSize;
-  int z = thisIndex.z * patchSize;
+  int x = thisIndex.x * patchSize + patchOriginX;
+  int y = thisIndex.y * patchSize + patchOriginY;
+  int z = thisIndex.z * patchSize + patchOriginZ;
 
   if (p.x < x) px = -1;
   else if (p.x > x+patchSize) px = 1;
@@ -377,14 +354,24 @@ void Patch::checkNextStep(){
       particles.push_back(incomingParticles[i]);
     incomingParticles.removeAll();
 
-    if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0 && stepCount%10==0) {
+    if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0 && stepCount%100==0) {
       timer = CmiWallTimer();
-      CkPrintf("Step %d Benchmark Time %f ms/step\n", stepCount, ((timer - stepTime)/10)*1000);
+      CkPrintf("Step %d Benchmark Time %f ms/step\n", stepCount, ((timer - stepTime)/100)*1000);
       stepTime = timer;
+      //if (stepCount == 300)
+	//traceBegin();
+      //if (stepCount == 400)
+	//traceEnd();
+
     }
+ //   if (stepCount == 300 && thisIndex.x*patchArrayDimY*patchArrayDimZ + thisIndex.y*patchArrayDimZ + thisIndex.z < 8)
+ //     traceBegin();
+ //   if (stepCount == 301 && thisIndex.x*patchArrayDimY*patchArrayDimZ + thisIndex.y*patchArrayDimZ + thisIndex.z < 8)
+ //     traceEnd();
 
     // checking for next step
     if (stepCount >= finalStepCount) {
+      CkPrintf("Final number of particles is %d on Patch [%d][%d][%d]\n", particles.length(), thisIndex.x, thisIndex.y, thisIndex.z);
       print();
       contribute(CkCallback(CkIndex_Main::allDone(), mainProxy)); 
     } else {
@@ -404,7 +391,7 @@ void Patch::receiveParticles(CkVec<Particle> &updates) {
 
   // if all the incoming particle updates have been received, we must check 
   // whether to proceed with next step
-  if(updateCount == NUM_NEIGHBORS-1 ) {
+  if(updateCount == NUM_NEIGHBORS ) {
     updateCount = 0;
     incomingFlag = true;
     checkNextStep();
@@ -414,22 +401,24 @@ void Patch::receiveParticles(CkVec<Particle> &updates) {
 // Function to update properties (i.e. acceleration, velocity and position) in particles
 void Patch::updateProperties() {
   int i;
-  double xDisp, yDisp, zDisp;
-	
+  BigReal powTen, powFteen;
+  powTen = pow(10, -10);
+  powFteen = pow(10, -15);
   for(i = 0; i < particles.length(); i++) {
     // applying kinetic equations
-    particles[i].ax = particles[i].fx / DEFAULT_MASS;
-    particles[i].ay = particles[i].fy / DEFAULT_MASS;
-    particles[i].az = particles[i].fz / DEFAULT_MASS;
-    particles[i].vx = particles[i].vx + particles[i].ax * DEFAULT_DELTA;
-    particles[i].vy = particles[i].vy + particles[i].ay * DEFAULT_DELTA;
-    particles[i].vz = particles[i].vz + particles[i].az * DEFAULT_DELTA;
+    BigReal massParticle = particles[i].mass;
+    particles[i].ax = particles[i].fx / massParticle * AVAGADROS_NUMBER / powTen;
+    particles[i].ay = particles[i].fy / massParticle * AVAGADROS_NUMBER / powTen;
+    particles[i].az = particles[i].fz / massParticle * AVAGADROS_NUMBER / powTen;
+    particles[i].vx = particles[i].vx + particles[i].ax * timeDelta * powFteen;
+    particles[i].vy = particles[i].vy + particles[i].ay * timeDelta * powFteen;
+    particles[i].vz = particles[i].vz + particles[i].az * timeDelta * powFteen;
 
     limitVelocity(particles[i]);
 
-    particles[i].x = particles[i].x + particles[i].vx * DEFAULT_DELTA;
-    particles[i].y = particles[i].y + particles[i].vy * DEFAULT_DELTA;
-    particles[i].z = particles[i].z + particles[i].vz * DEFAULT_DELTA;
+    particles[i].x = particles[i].x + particles[i].vx * timeDelta * powFteen;
+    particles[i].y = particles[i].y + particles[i].vy * timeDelta * powFteen;
+    particles[i].z = particles[i].z + particles[i].vz * timeDelta * powFteen;
 
     particles[i].fx = 0.0;
     particles[i].fy = 0.0;
@@ -461,12 +450,12 @@ void Patch::limitVelocity(Particle &p) {
 }
 
 Particle& Patch::wrapAround(Particle &p) {
-  if(p.x < 0.0) p.x += patchSize*patchArrayDimX;
-  if(p.y < 0.0) p.y += patchSize*patchArrayDimY;
-  if(p.z < 0.0) p.z += patchSize*patchArrayDimZ;
-  if(p.x > patchSize*patchArrayDimX) p.x -= patchSize*patchArrayDimX;
-  if(p.y > patchSize*patchArrayDimY) p.y -= patchSize*patchArrayDimY;
-  if(p.z > patchSize*patchArrayDimZ) p.z -= patchSize*patchArrayDimZ;
+  if(p.x < patchOriginX) p.x += patchSize*patchArrayDimX;
+  if(p.y < patchOriginY) p.y += patchSize*patchArrayDimY;
+  if(p.z < patchOriginZ) p.z += patchSize*patchArrayDimZ;
+  if(p.x > patchOriginX + patchSize*patchArrayDimX) p.x -= patchSize*patchArrayDimX;
+  if(p.y > patchOriginY + patchSize*patchArrayDimY) p.y -= patchSize*patchArrayDimY;
+  if(p.z > patchOriginZ + patchSize*patchArrayDimZ) p.z -= patchSize*patchArrayDimZ;
 
   return p;
 }
@@ -501,8 +490,8 @@ void Patch::requestNextFrame(liveVizRequestMsg *lvmsg) {
       color_pixel(intensity,myWidthPx,myHeightPx,j,i,0,0,0);	// black background
 
   for (int i=0; i < particles.length(); i++ ) {
-    int xpos = (int)((particles[i].x /(double) (patchSize*patchArrayDimX)) * wdes) - sx;
-    int ypos = (int)((particles[i].y /(double) (patchSize*patchArrayDimY)) * hdes) - sy;
+    int xpos = (int)((particles[i].x /(BigReal) (patchSize*patchArrayDimX)) * wdes) - sx;
+    int ypos = (int)((particles[i].y /(BigReal) (patchSize*patchArrayDimY)) * hdes) - sy;
 
     Color c(particles[i].id);
     color_pixel(intensity,myWidthPx,myHeightPx,xpos+1,ypos,c.R,c.B,c.G);
@@ -538,4 +527,3 @@ void Patch::print(){
 #endif
 }
 
-#include "Patch.def.h"
