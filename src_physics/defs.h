@@ -24,6 +24,7 @@ typedef double BigReal;
 #define USE_PAIRLISTS		true  //generally faster if true
 
 #define STRUCTURE_FILENAME	"iapp.js"
+#define PARAMS_FILENAME		"./par_all22_prot.inp"
 
 #define DEFAULT_DELTA		1 // in femtoseconds
 
@@ -48,7 +49,7 @@ typedef double BigReal;
 #define PME_CUT_OFF             PATCH_SIZE
 
 #define MIGRATE_STEPCOUNT	20
-#define DEFAULT_FINALSTEPCOUNT	2001
+#define DEFAULT_FINALSTEPCOUNT	101
 #define MAX_VELOCITY		30.0
 
 #define KAWAY_X			1
@@ -63,9 +64,29 @@ typedef double BigReal;
 #define WRAP_Y(a)		(((a)+patchArrayDimY)%patchArrayDimY)
 #define WRAP_Z(a)		(((a)+patchArrayDimZ)%patchArrayDimZ)
 
+// Struct for keeping track of vdw parameters
+class vdwPars{
+  public:
+    BigReal A;
+    BigReal B;
+    BigReal A14;
+    BigReal B14;
+
+    vdwPars(){
+      A = B = A14 = B14 = 0;
+    }
+    
+    void pup(PUP::er &p) {
+      p | A; p | B; p | A14; p | B14;
+    }
+
+};
+
 // Class for keeping track of the properties for a particle
 class Particle {
   public:
+    int vdw_type;
+
     int id;
     BigReal mass;	// mass of the particle
     BigReal charge;     // charge of particle
@@ -97,6 +118,7 @@ class Particle {
       p | fx; p | fy; p | fz;
       p | ax; p | ay; p | az;
       p | vx; p | vy; p | vz;
+      p | vdw_type;
     }
 };
 

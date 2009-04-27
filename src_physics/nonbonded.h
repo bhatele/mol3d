@@ -14,6 +14,10 @@ extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Patch patchArray;
 extern /* readonly */ CProxy_Compute computeArray;
 
+extern /* readonly */ vdwParams *vdwTable;
+
+extern /* readonly */ sqrtTable *rootTable;
+
 extern /* readonly */ bool usePairLists;
 extern /* readonly */ int numParts;
 extern /* readonly */ int patchArrayDimX;	// Number of Chare Rows
@@ -24,16 +28,19 @@ extern /* readonly */ int ptpCutOff;
 extern /* readonly */ int finalStepCount; 
 extern /* readonly */ BigReal stepTime; 
 
-extern /* readonly */ double A;			// Force Calculation parameter 1
-extern /* readonly */ double B;			// Force Calculation parameter 2
+//extern /* readonly */ double A;			// Force Calculation parameter 1
+//extern /* readonly */ double B;			// Force Calculation parameter 2
 
 //calculate pair forces using pairlists
-inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second, CkVec<int> *pairList) {
+inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second, CkVec<int> *pairList, int *numLists) {
   int i, j, jpart, ptpCutOffSqd, diff;
   int firstLen = first->lengthAll;
   int secondLen = second->lengthAll;
   BigReal powTwenty, firstx, firsty, firstz, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr, eField, constants;
   double rSix, rTwelve;
+  double A, B;
+  vdwPars *vdwp;
+  sqrtPars pars;
   ParticleForceMsg *firstmsg = new (firstLen) ParticleForceMsg;
   ParticleForceMsg *secondmsg = new (secondLen) ParticleForceMsg;
   firstmsg->lengthUpdates = firstLen;
@@ -66,6 +73,7 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
   //check if pairlist needs to be updated
   if (first->updateList){
     pairList = new CkVec<int>[firstLen];
+    *numLists = firstLen;
     for (i = 0; i < firstLen; i++){
       firstx = first->coords[i].x;
       firsty = first->coords[i].y;
@@ -98,8 +106,13 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
       rsqd = rx*rx + ry*ry + rz*rz;
       if (rsqd >= 0.001){
 	rsqd = rsqd * powTwenty;
-//	r = sqrt(rsqd);
-	r = r * 10000000000;
+	//r = sqrt(rsqd);
+	pars = rootTable->pars[(int)(rsqd/rootTable->delta)];
+	r = pars.a + rsqd*(pars.b+rsqd*(pars.c+ rsqd*pars.d));
+	vdwp = &(vdwTable->params[first->vdwIndex[i]*vdwTable->numParams + second->vdwIndex[jpart]]);
+	A = vdwp->A;
+	B = vdwp->B;
+	//r = r * 10000000000;
 	rSix = ((double)rsqd) * rsqd * rsqd;
 	rTwelve = rSix * rSix;
         f = (BigReal)(A / rTwelve - B / rSix);
@@ -124,6 +137,8 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
       pairList[i].removeAll();
     }
     delete [] pairList;
+    *numLists = -1;
+    pairList = NULL;
   }
   delete first;
   delete second;
@@ -137,6 +152,10 @@ inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second) {
   int secondLen = second->lengthAll;
   BigReal powTwenty, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr, eField, constants;
   double rSix, rTwelve;
+  double A, B;
+  sqrtPars pars;
+  vdwPars *vdwp;
+
   ParticleForceMsg *firstmsg = new (firstLen) ParticleForceMsg;
   ParticleForceMsg *secondmsg = new (secondLen) ParticleForceMsg;
   firstmsg->lengthUpdates = firstLen;
@@ -178,7 +197,13 @@ inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second) {
       rsqd = rx*rx + ry*ry + rz*rz;
       if (rsqd >= 0.001 && rsqd < ptpCutOffSqd){
 	rsqd = rsqd * powTwenty;
-	r = sqrt(rsqd);
+	//r = rsqd/1000000000;
+	//r = sqrt(rsqd);
+	pars = rootTable->pars[(int)(rsqd/rootTable->delta)];
+	r = pars.a + rsqd*(pars.b+rsqd*(pars.c+ rsqd*pars.d));
+	vdwp = &vdwTable->params[first->vdwIndex[i]*vdwTable->numParams + second->vdwIndex[jpart]];
+	A = vdwp->A;
+	B = vdwp->B;
 	rSix = ((double)rsqd) * rsqd * rsqd;
 	rTwelve = rSix * rSix;
         f = (BigReal)(A / rTwelve - B / rSix);
@@ -208,6 +233,10 @@ inline void calcInternalForces(ParticleDataMsg* first) {
   int firstLen = first->lengthAll;
   BigReal powTwenty, firstx, firsty, firstz, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr, eField, constants;
   double rSix, rTwelve;
+  double A, B;
+  vdwPars *vdwp;
+  sqrtPars pars;
+
   ParticleForceMsg *firstmsg = new (firstLen) ParticleForceMsg;
   firstmsg->lengthUpdates = firstLen;
     
@@ -230,8 +259,12 @@ inline void calcInternalForces(ParticleDataMsg* first) {
       //check if r >= .000001 to make sure force calc doesnt tend to 0
       if(rsqd >= 0.001 && rsqd < ptpCutOffSqd){
 	rsqd = rsqd * powTwenty;
-//	r = sqrt(rsqd);
-	r = r * 10000000000;
+	//r = sqrt(rsqd);
+	pars = rootTable->pars[(int)(rsqd/rootTable->delta)];
+	r = pars.a + rsqd*(pars.b+rsqd*(pars.c+ rsqd*pars.d));
+	vdwp = &vdwTable->params[first->vdwIndex[i]*vdwTable->numParams + first->vdwIndex[j]];
+	A = vdwp->A;
+	B = vdwp->B;
 	rSix = ((double)rsqd) * rsqd * rsqd;
 	rTwelve = rSix * rSix;
         f = (BigReal)(A / rTwelve - B / rSix);
