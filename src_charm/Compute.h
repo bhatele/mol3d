@@ -21,6 +21,28 @@ struct force {
   BigReal z;
 };
 
+class sqrtPars {
+  public:
+    BigReal a; //constant
+    BigReal b;
+    BigReal c;
+    BigReal d; //x^3
+
+    void pup(PUP::er &p) {
+      p | a; p | b;
+      p | c;  p | d;
+    }
+};
+
+
+class sqrtTable : public CMessage_sqrtTable {
+  public:
+    sqrtPars* pars;
+    int length;
+    BigReal delta;
+};
+
+
 class ParticleForceMsg : public CMessage_ParticleForceMsg {
   public:
     int lengthX;
@@ -35,6 +57,8 @@ class ParticleForceMsg : public CMessage_ParticleForceMsg {
 class Compute : public CBase_Compute {
   private:
     int cellCount;  // to count the number of interact() calls
+    int numLists;
+    int bmsgLenAll;
     ParticleDataMsg *bufferedMsg;
     CkVec<int> *pairList;
 
@@ -46,7 +70,37 @@ class Compute : public CBase_Compute {
     //void calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second);
     //void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second);
     //void calcInternalForces(ParticleDataMsg* first);
-           
+
+    void pup(PUP::er &p) {
+      CBase_Compute::pup(p);
+      p | cellCount;
+      p | numLists;
+      p | bmsgLenAll;
+      int hasMsg = (bmsgLenAll >= 0); // only pup if msg will be used
+      p | hasMsg;
+      if (hasMsg){
+	//CkPrintf("HERE?\n");
+	if (p.isUnpacking())
+	  bufferedMsg = new (bmsgLenAll, bmsgLenAll, bmsgLenAll) ParticleDataMsg;
+	p | *bufferedMsg;
+      }
+      else
+        bufferedMsg = NULL;
+
+      int hasList = (numLists >= 0  && pairList != NULL);
+      p | hasList;
+      if (hasList){
+	//CkPrintf("NUMLISTS = %d\n", numLists);
+	if (p.isUnpacking())
+	  pairList = new CkVec<int>[numLists];
+	PUParray(p, pairList, numLists);
+      }
+      else{
+	//CkPrintf("MUST BE HERE\n");
+	pairList = NULL;
+      }
+      //CkPrintf("done pupping a compute \n");
+    }           
 };
 
 #endif

@@ -8,6 +8,9 @@ mainmodule mol3d {
 //  readonly CProxy_PMEDecompositor PMEDecompArray;
   readonly CkGroupID mCastGrpID;
 
+  readonly message vdwParams *vdwTable;	// vdw params table
+  readonly message sqrtTable *rootTable; // sqrt itnerpolation table
+
   readonly int numParts;	// total number of particles
   readonly int patchArrayDimX;	// X dimension of the Patch array 
   readonly int patchArrayDimY;	// Y dimension of the Patch array
@@ -34,15 +37,28 @@ mainmodule mol3d {
   readonly double B;		// LJ parameter
   readonly bool usePairLists;	// determines whether or not to use pairlists for point to point force calculations
 
+  
+
   mainchare Main {
     entry Main(CkArgMsg* msg);
     entry void allDone();
     entry void startUpDone();
   };
 
+  message vdwParams {
+    vdwPars params[];
+  };
+
+
+  message sqrtTable {
+    sqrtPars pars[];
+  };
+
+
   message ParticleDataMsg{
     loc	coords[];
     BigReal charge[];
+    int vdwIndex[];
   };
 
   message ParticleForceMsg{
@@ -53,6 +69,7 @@ mainmodule mol3d {
     BigReal charge[];
     BigReal mass[];
     loc coords[];
+    int vdw_type[];
   };
 
 //  message GCMessage{

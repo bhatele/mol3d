@@ -19,6 +19,7 @@
 #include "Main.h"
 #include "Patch.h"
 #include "Compute.h"
+#include "sqrtTable.h"
 #include "ConfigList.h"
 #include "molfile_plugin.h"
 #include "PluginIOMgr.h"
@@ -33,6 +34,9 @@
 ///* readonly */ CProxy_PMECompositor PMECompArray;
 ///* readonly */ CProxy_PMEDecompositor PMEDecompArray;
 /* readonly */ CkGroupID mCastGrpID;
+
+/* readonly */ vdwParams *vdwTable;
+/* readonly */ sqrtTable *rootTable;
 
 /* readonly */ int numParts;
 /* readonly */ int patchArrayDimX;	// Number of Chares in X
@@ -88,7 +92,13 @@ Main::Main(CkArgMsg* msg) {
   migrateStepCount = MIGRATE_STEPCOUNT;
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   structureFilename = STRUCTURE_FILENAME;
+  //paramsFileName = PARAMS_FILENAME;
   timeDelta = DEFAULT_DELTA;
+
+  simParams = new SimParameters();  
+  simParams->paraTypeCharmmOn = false;
+  simParams->paraTypeXplorOn = true;
+  simParams->cosAngles = false;  
 
   delete msg;
   mainProxy = thisProxy;
@@ -98,8 +108,15 @@ Main::Main(CkArgMsg* msg) {
   int numPes = CkNumPes();
   int currPe = -1, pe;
 
+  //get square root interpolation table
+  rootTable = fillTable(10000, ((BigReal)ptpCutOff*ptpCutOff)*pow(10,-18)/10000);
+
   //read config file
-  if (msg->argc > 1) readConfigFile(msg->argv[1]);
+  if (msg->argc > 1) {
+    readConfigFile(msg->argv[1]);
+    if (simParams->paraTypeCharmmOn || simParams->paraTypeXplorOn)
+      readParameterFile(sl_parameters, simParams);
+  }
 
 
   //reading data
@@ -118,17 +135,17 @@ Main::Main(CkArgMsg* msg) {
 	if (x == patchArrayDimX -1 && y == patchArrayDimY -1 && z == patchArrayDimZ -1)
 	  fdmsgcopy = fdmsg;
 	else {
-	  fdmsgcopy = new (numParts, numParts, numParts*3) FileDataMsg;
+	  fdmsgcopy = new (numParts, numParts, numParts*3, numParts) FileDataMsg;
 	  memcpy(fdmsgcopy->mass, fdmsg->mass, numParts*sizeof(BigReal));
 	  memcpy(fdmsgcopy->charge, fdmsg->charge, numParts*sizeof(BigReal));
 	  memcpy(fdmsgcopy->coords, fdmsg->coords, numParts*3*sizeof(BigReal));
+	  memcpy(fdmsgcopy->vdw_type, fdmsg->vdw_type, numParts*sizeof(int));
 	  fdmsgcopy->length = fdmsg->length;
 	}
 	pe = (++currPe) % numPes;
 	patchArray(x, y, z).insert(fdmsgcopy, pe);
       }
   patchArray.doneInserting();
-
   CkPrintf("%d PATCHES CREATED\n", patchArrayDimX * patchArrayDimY * patchArrayDimZ);
 
 #ifdef USE_SECTION_MULTICAST
@@ -190,6 +207,7 @@ void Main::startUpDone() {
 // retrieve necessary information out of a .namd file
 void Main::readConfigFile(const char* filename){
   ConfigList *cfg;
+  string sON = "on";
   cfg = new ConfigList(filename);
   const StringList* sl_structure = cfg->find("structure");
   if (sl_structure != NULL)
@@ -216,6 +234,20 @@ void Main::readConfigFile(const char* filename){
   const StringList* sl_timestep = cfg->find("timestep");
   if (sl_timestep != NULL)
     timeDelta = atof(sl_timestep->data);
+
+  sl_parameters = cfg->find("parameters");
+
+  const StringList* sl_paraTypeXplor = cfg->find("paraTypeXplor");
+  if (sl_paraTypeXplor != NULL && sON.compare(sl_paraTypeXplor->data) == 0){
+    simParams->paraTypeXplorOn = true;
+    simParams->paraTypeCharmmOn = false;
+  }
+
+  const StringList* sl_paraTypeCharmm = cfg->find("paraTypeCharmm");
+  if (sl_paraTypeCharmm != NULL && sON.compare(sl_paraTypeCharmm->data) == 0){
+    simParams->paraTypeCharmmOn = true;
+    simParams->paraTypeXplorOn = false;
+  }
 }
 
 // retrieves particle data out of a .js file
@@ -256,11 +288,14 @@ FileDataMsg* Main::readParticleData() {
     CkExit();
   }
   
-  FileDataMsg *fdmsg = new (numAtoms, numAtoms, numAtoms) FileDataMsg;
-
+  FileDataMsg *fdmsg = new (numAtoms, numAtoms, numAtoms, numAtoms) FileDataMsg;
+  Atom fakeAtom;
   for (int i = 0; i < numAtoms; i++){
     fdmsg->mass[i] = atomarray[i].mass; 
     fdmsg->charge[i] = atomarray[i].charge; //charge may be being received with wrong units!!! previously had factor of 10 / 4
+    //CkPrintf("atom name = %s atom type = %s\n",atomarray[i].name, atomarray[i].type);
+    fileParams->assign_vdw_index(atomarray[i].type, &fakeAtom);
+    fdmsg->vdw_type[i] = fakeAtom.vdw_type;
   }
 
   fdmsg->length = numAtoms;
@@ -311,4 +346,51 @@ FileDataMsg* Main::readParticleData() {
   // do we need to read the velocities?
 }
 
+// reads parameter file
+void Main::readParameterFile(const StringList* sl_params, SimParameters* sParams){
+  int numParams;
+  vdwPars *vdwp;
+  Real sigma_i, sigma_i14, epsilon_i, epsilon_i14;
+  Real sigma_j, sigma_j14, epsilon_j, epsilon_j14;
+  Real rA, rB, rA14, rB14;
+  CkPrintf("Reading parameter files\n");
+  fileParams = new Parameters(sParams, (StringList*)sl_params);
+  numParams = fileParams->get_num_vdw_params();
+  CkPrintf("Assigned %d vdw_params\n", numParams);
+  vdwTable = new (numParams*numParams) vdwParams;
+  vdwTable->numParams = numParams;
+  for (int i = 0; i < numParams; i++){
+    for (int j = 0; j < numParams; j++){
+      vdwp = &vdwTable->params[i*numParams +j];
+      if (fileParams->get_vdw_pair_params((Index)i, (Index)j, &rA, &rB, &rA14, &rB14) == 1){
+	CkPrintf("retreived params for (%d, %d)\n", i,j);
+	vdwp->A = (BigReal)rA;
+	vdwp->B = (BigReal)rB;
+	vdwp->A14 = (BigReal)rA14;
+	vdwp->B14 = (BigReal)rB14;
+      }
+      else {
+	fileParams->get_vdw_params(&sigma_i, &epsilon_i, &sigma_i14,
+                                       &epsilon_i14, (Index)i);
+	fileParams->get_vdw_params(&sigma_j, &epsilon_j, &sigma_j14,
+                                       &epsilon_j14, (Index)j);
+	BigReal sigma_ij = sqrt(sigma_i*sigma_j);
+	BigReal sigma_ij14 = sqrt(sigma_i14*sigma_j14);
+	BigReal epsilon_ij = sqrt(epsilon_i*epsilon_j);
+	BigReal epsilon_ij14 = sqrt(epsilon_i14*epsilon_j14);
+
+	sigma_ij *= sigma_ij*sigma_ij;
+	sigma_ij *= sigma_ij;
+	sigma_ij14 *= sigma_ij14*sigma_ij14;
+	sigma_ij14 *= sigma_ij14;
+
+	//  Calculate LJ constants A & B
+	vdwp->B = 4.0 * sigma_ij * epsilon_ij;
+	vdwp->A = vdwp->B * sigma_ij;
+	vdwp->B14 = 4.0 * sigma_ij14 * epsilon_ij14;
+        vdwp->A14 = vdwp->B14 * sigma_ij14;
+      }
+    }
+  }
+}
 #include "mol3d.def.h"

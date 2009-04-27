@@ -35,6 +35,7 @@ extern /* readonly */ CProxy_Compute computeArray;
 //extern /* readonly */ CProxy_PMEDecompositor PMEDecompArray;
 extern /* readonly */ CkGroupID mCastGrpID;
 
+
 extern /* readonly */ int numParts;
 extern /* readonly */ int patchArrayDimX;	// Number of Chares in X
 extern /* readonly */ int patchArrayDimY;	// Number of Chares in Y
@@ -87,6 +88,8 @@ Patch::Patch(FileDataMsg* fdmsg) {
       particles[myNumParts].fz = 0;
      
       particles[myNumParts].id = (thisIndex.x*patchArrayDimX + thisIndex.y) * numParts / (patchArrayDimX*patchArrayDimY)  + i;
+      
+      particles[myNumParts].vdw_type = fdmsg->vdw_type[i];
       myNumParts++;
     }   
   }	
@@ -99,6 +102,7 @@ Patch::Patch(FileDataMsg* fdmsg) {
   updateFlag = false;
   incomingFlag = false;
   incomingParticles.resize(0);
+  setMigratable(CmiFalse);
   delete fdmsg;
 }
 
@@ -204,7 +208,7 @@ void Patch::start() {
   int z = thisIndex.z;
   int len = particles.length();
   
-  ParticleDataMsg* msg = new (len, len) ParticleDataMsg;
+  ParticleDataMsg* msg = new (len, len, len) ParticleDataMsg;
   msg->x = x;
   msg->y = y;
   msg->z = z;
@@ -226,6 +230,7 @@ void Patch::start() {
     msg->coords[i].y = particles[i].y;
     msg->coords[i].z = particles[i].z;
     msg->charge[i] = particles[i].charge;
+    msg->vdwIndex[i] = particles[i].vdw_type;
   }
 #ifdef USE_SECTION_MULTICAST
   mCastSecProxy.interact(msg);
@@ -242,7 +247,7 @@ void Patch::start() {
     if (num == NUM_NEIGHBORS-1)
       computeArray(px1, py1, pz1, px2, py2, pz2).interact(msg);
     else {
-      ParticleDataMsg* newMsg = new (len, len) ParticleDataMsg;
+      ParticleDataMsg* newMsg = new (len, len, len) ParticleDataMsg;
       newMsg->x = x;
       newMsg->y = y;
       newMsg->z = z;
@@ -253,6 +258,7 @@ void Patch::start() {
       }
       memcpy(newMsg->coords, msg->coords, 3*len*sizeof(BigReal));
       memcpy(newMsg->charge, msg->charge, len*sizeof(BigReal));
+      memcpy(newMsg->vdwIndex, msg->vdwIndex, len*sizeof(int));
       computeArray(px1, py1, pz1, px2, py2, pz2).interact(newMsg);
     } 
   }
@@ -290,7 +296,7 @@ void Patch::receiveForces(ParticleForceMsg *updates) {
       for(i=0; i<particles.length(); i++) {
 	migrateToPatch(particles[i], x1, y1, z1);
 	if(x1 !=0 || y1!=0 || z1 !=0) {
-//	  CkPrintf("PARTICLE MIGRATING!\n");
+	  //CkPrintf("PARTICLE MIGRATING!\n");
 	  outgoing[(x1+1)*NBRS_Y*NBRS_Z + (y1+1)*NBRS_Z + (z1+1)].push_back(wrapAround(particles[i]));
 	  particles.remove(i);
 	}

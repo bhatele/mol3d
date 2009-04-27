@@ -9,7 +9,8 @@ mol3d_charm: $(OBJS) $(OBJS_DECL)
 	$(CHARMC) -o $(TARGET_LIB) $(OBJS) -language charm++ \
 	-module CkMulticast $(OPTS)
 
-Main.o: Main.C Main.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h $(MAKE_MOL3D_NAMDSRC)/PluginIOMgr.h $(MAKE_MOL3D_NAMDSRC)/ConfigList.h
+Main.o: Main.C Main.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h $(MAKE_MOL3D_PHYSICS)/sqrtTable.h $(MAKE_MOL3D_NAMDSRC)/PluginIOMgr.h $(MAKE_MOL3D_NAMDSRC)/ConfigList.h \
+	$(MAKE_MOL3D_NAMDSRC)/Parameters.h $(MAKE_MOL3D_NAMDSRC)/SimParameters.h
 	$(CHARMC) $(OPTS) $(INC) -o Main.o Main.C
 
 Patch.o: Patch.C Patch.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h

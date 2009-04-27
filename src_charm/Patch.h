@@ -14,10 +14,21 @@
 #ifndef __PATCH_H__
 #define __PATCH_H__
 
-struct loc{
-  BigReal x;
-  BigReal y;
-  BigReal z;
+class vdwParams : public CMessage_vdwParams {
+  public:
+    vdwPars *params;
+    int numParams;
+};
+
+class loc{
+  public:
+    BigReal x;
+    BigReal y;
+    BigReal z;
+
+    void pup(PUP::er &p){
+      p|x; p|y; p|z;
+    }
 };
 
 class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
@@ -27,12 +38,29 @@ class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
     //BigReal* particleLocZ;
     loc* coords;
     BigReal* charge;
+    int *vdwIndex;
     int lengthAll;
     int x;
     int y;
     int z;
     bool updateList;
     bool deleteList;
+
+    void pup(PUP::er &p){
+      CMessage_ParticleDataMsg::pup(p);
+      p | lengthAll;
+      p | x; p | y; p | z;
+      p | updateList;
+      p | deleteList;
+      if (p.isUnpacking()){
+	coords = new loc[lengthAll];
+	charge = new BigReal[lengthAll];
+	vdwIndex = new int[lengthAll];
+      }
+      PUParray(p, coords, lengthAll);
+      PUParray(p, charge, lengthAll);
+      PUParray(p, vdwIndex, lengthAll);
+    } 
 };
 
 class FileDataMsg : public CMessage_FileDataMsg {
@@ -40,6 +68,7 @@ class FileDataMsg : public CMessage_FileDataMsg {
     BigReal* charge;
     BigReal* mass;
     loc* coords; //encoded as x1 y1 z1 x2 y2 z2...
+    int* vdw_type;
     int length;
 };
 
