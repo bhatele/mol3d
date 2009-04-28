@@ -1,7 +1,7 @@
 include ../compile/Makefile.config
 
 TARGET_LIB	= $(MOL3D)/compile/libNamdsrc.a
-OBJS		= jsplugin.o PluginIOMgr.o ConfigList.o strlib.o common.o GromacsTopFile.o Parameters.o Communicate.o ProcessorPrivate.o InfoStream.o parm.o
+OBJS		= jsplugin.o PluginIOMgr.o ConfigList.o strlib.o common.o GromacsTopFile.o MStream.o Parameters.o Communicate.o ProcessorPrivate.o InfoStream.o parm.o
 OBJS_DECL	= 
 
 mol3d_namdsrc: $(OBJS) $(OBJS_DECL)
@@ -24,6 +24,9 @@ common.o: common.C common.h InfoStream.h
 
 GromacsTopFile.o: GromacsTopFile.C common.h ResizeArray.h ResizeArrayRaw.h GromacsTopFile.h
 	$(CHARMC) $(OPTS) -o GromacsTopFile.o GromacsTopFile.C
+
+MStream.o: MStream.C Communicate.h MStream.h Vector.h common.h Debug.h
+	$(CHARMC) $(OPTS) -o MStream.o MStream.C
 
 Parameters.o: Parameters.C InfoStream.h Parameters.h parm.h common.h structures.h strlib.h MStream.h Vector.h SimParameters.h Lattice.h NamdTypes.h \
 	      ResizeArray.h ResizeArrayRaw.h Tensor.h MGridforceParams.h GromacsTopFile.h Communicate.h ConfigList.h Debug.h
