@@ -100,7 +100,6 @@ Main::Main(CkArgMsg* msg) {
   simParams->paraTypeXplorOn = true;
   simParams->cosAngles = false;  
 
-  delete msg;
   mainProxy = thisProxy;
   phase = 0;
 
@@ -161,6 +160,7 @@ Main::Main(CkArgMsg* msg) {
 	patchArray(x, y, z).createComputes();
 
 
+  delete msg;
   // initializing GridCompute array
 //  gridComputeArray = CProxy_GridCompute::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
 
