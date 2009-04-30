@@ -6,9 +6,9 @@ all: full_code
 #===============================================================================
 full_code: charm namdsrc
 	cd $(MOL3D)/compile; \
-        $(CHARMC) -o $(BINARY) \
+        $(CHARMC) -module EveryLB -o $(BINARY) \
                   -language charm++ \
-                  -L. -lCharm -lNamdsrc 
+                  -L. -lCharm -lNamdsrc -lck
 
 #===============================================================================
 charm:
