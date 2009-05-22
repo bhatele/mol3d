@@ -216,13 +216,17 @@ void Patch::start() {
   // If using pairlists determine whether or not its time to update the pairlist
   if (usePairLists){
     msg->deleteList = false;
+    msg->doAtSync = false;
     if (stepCount == 0 || ((stepCount % migrateStepCount == 1) && stepCount > 1)){
       msg->updateList = true;
     }
     else{
       msg->updateList = false;
-      if (stepCount % migrateStepCount == 0)
+      if (stepCount % migrateStepCount == 0){
 	msg->deleteList = true;
+	if (migrateStepCount*1024 % stepCount == 0)
+	  msg->doAtSync = true;
+      }
     }
   }
   for (int i = 0; i < len; i++){
@@ -255,6 +259,7 @@ void Patch::start() {
       if (usePairLists){
 	newMsg->updateList = msg->updateList;
 	newMsg->deleteList = msg->deleteList;
+	newMsg->doAtSync = msg->doAtSync;
       }
       memcpy(newMsg->coords, msg->coords, 3*len*sizeof(BigReal));
       memcpy(newMsg->charge, msg->charge, len*sizeof(BigReal));

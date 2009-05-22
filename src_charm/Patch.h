@@ -45,6 +45,7 @@ class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
     int z;
     bool updateList;
     bool deleteList;
+    bool doAtSync;
 
     void pup(PUP::er &p){
       CMessage_ParticleDataMsg::pup(p);
@@ -52,6 +53,7 @@ class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
       p | x; p | y; p | z;
       p | updateList;
       p | deleteList;
+      p | doAtSync;
       if (p.isUnpacking()){
 	coords = new loc[lengthAll];
 	charge = new BigReal[lengthAll];

@@ -45,7 +45,7 @@ Compute::Compute() {
   cellCount = 0;
   numLists = -1;
   bmsgLenAll = -1;
-  //usesAtSync = CmiTrue;
+  usesAtSync = CmiTrue;
 }
 
 Compute::Compute(CkMigrateMessage *msg) { }
@@ -56,9 +56,10 @@ void Compute::interact(ParticleDataMsg *msg){
 
   // self interaction check
   if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
+    if (msg->doAtSync)
+      AtSync();
     bmsgLenAll = -1;
     calcInternalForces(msg);
-    //AtSync();
   } else {
     if (cellCount == 0) {
       bufferedMsg = msg;
@@ -68,6 +69,8 @@ void Compute::interact(ParticleDataMsg *msg){
       // if both particle sets are received, compute interaction
       cellCount = 0;
       bmsgLenAll = -1;
+      if (msg->doAtSync)
+	AtSync();
       if (usePairLists){
 	if (bufferedMsg->lengthAll <= msg->lengthAll)
 	  pairList = calcPairForcesPL(bufferedMsg, msg, pairList, &numLists);
@@ -81,7 +84,6 @@ void Compute::interact(ParticleDataMsg *msg){
 	  calcPairForces(msg, bufferedMsg);
       }
       bufferedMsg = NULL;
-      //AtSync();
     }
   }
 }
