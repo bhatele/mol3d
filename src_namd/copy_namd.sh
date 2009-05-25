@@ -30,7 +30,7 @@ cp $PLUGINC/molfile_plugin.h .
 cp $SRC/MStream.C .
 cp $SRC/MStream.h .
 cp $SRC/NamdTypes.h .
-cp $SRC/Parameters.C .
+#cp $SRC/Parameters.C .
 cp $SRC/Parameters.h .
 cp $SRC/parm.h .
 cp $SRC/parm.C .
