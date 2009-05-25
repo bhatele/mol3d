@@ -69,29 +69,26 @@ Patch::Patch(FileDataMsg* fdmsg) {
 
   // Particle initialization
   myNumParts = 0;
-  for(i=0; i < numParts; i++) {
-    if (((int)((fdmsg->coords[i].x - patchOriginX) / patchSize)) == thisIndex.x && ((int)((fdmsg->coords[i].y-patchOriginY) / patchSize)) == thisIndex.y
-	&& ((int)((fdmsg->coords[i].z-patchOriginZ) / patchSize)) == thisIndex.z) {
-      particles.push_back(Particle());
-      particles[myNumParts].charge = fdmsg->charge[i];
-      particles[myNumParts].mass = fdmsg->mass[i];
+  for(i=0; i < fdmsg->length; i++) {
+    particles.push_back(Particle());
+    particles[myNumParts].charge = fdmsg->charge[i];
+    particles[myNumParts].mass = fdmsg->mass[i];
 
-      particles[myNumParts].x = fdmsg->coords[i].x;
-      particles[myNumParts].y = fdmsg->coords[i].y;
-      particles[myNumParts].z = fdmsg->coords[i].z;
+    particles[myNumParts].x = fdmsg->coords[i].x;
+    particles[myNumParts].y = fdmsg->coords[i].y;
+    particles[myNumParts].z = fdmsg->coords[i].z;
 
-      particles[myNumParts].vx = 0;
-      particles[myNumParts].vy = 0;
-      particles[myNumParts].vz = 0;
-      particles[myNumParts].fx = 0;
-      particles[myNumParts].fy = 0;
-      particles[myNumParts].fz = 0;
+    particles[myNumParts].vx = 0;
+    particles[myNumParts].vy = 0;
+    particles[myNumParts].vz = 0;
+    particles[myNumParts].fx = 0;
+    particles[myNumParts].fy = 0;
+    particles[myNumParts].fz = 0;
      
-      particles[myNumParts].id = (thisIndex.x*patchArrayDimX + thisIndex.y) * numParts / (patchArrayDimX*patchArrayDimY)  + i;
-      
-      particles[myNumParts].vdw_type = fdmsg->vdw_type[i];
-      myNumParts++;
-    }   
+    particles[myNumParts].id = (thisIndex.x*patchArrayDimX + thisIndex.y) * numParts / (patchArrayDimX*patchArrayDimY)  + i;
+    
+    particles[myNumParts].vdw_type = fdmsg->vdw_type[i];
+    myNumParts++;
   }	
   //CkPrintf("Creating %d particles on Patch [%d][%d][%d]\n", myNumParts, thisIndex.x, thisIndex.y, thisIndex.z);
 

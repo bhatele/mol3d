@@ -127,20 +127,27 @@ Main::Main(CkArgMsg* msg) {
 
   patchArray = CProxy_Patch::ckNew();
 
+  CkVec<int> partsToSend;
+  int numSend;
   for (int x=0; x<patchArrayDimX; x++)
     for (int y=0; y<patchArrayDimY; y++)
       for (int z=0; z<patchArrayDimZ; z++) {
-	FileDataMsg *fdmsgcopy;
-	if (x == patchArrayDimX -1 && y == patchArrayDimY -1 && z == patchArrayDimZ -1)
-	  fdmsgcopy = fdmsg;
-	else {
-	  fdmsgcopy = new (numParts, numParts, numParts*3, numParts) FileDataMsg;
-	  memcpy(fdmsgcopy->mass, fdmsg->mass, numParts*sizeof(BigReal));
-	  memcpy(fdmsgcopy->charge, fdmsg->charge, numParts*sizeof(BigReal));
-	  memcpy(fdmsgcopy->coords, fdmsg->coords, numParts*3*sizeof(BigReal));
-	  memcpy(fdmsgcopy->vdw_type, fdmsg->vdw_type, numParts*sizeof(int));
-	  fdmsgcopy->length = fdmsg->length;
+	partsToSend.removeAll();
+	for (int i = 0; i < numParts; i++){
+	  if (((int)((fdmsg->coords[i].x - patchOriginX) / patchSize)) == x && ((int)((fdmsg->coords[i].y-patchOriginY) / patchSize)) == y
+	     && ((int)((fdmsg->coords[i].z-patchOriginZ) / patchSize)) == z) 
+	    partsToSend.push_back(i);
 	}
+	FileDataMsg *fdmsgcopy;
+	numSend = partsToSend.size();
+	fdmsgcopy = new (numSend, numSend, numSend, numSend) FileDataMsg;
+	for (int i = 0; i < numSend; i++){
+	  fdmsgcopy->mass[i] = fdmsg->mass[partsToSend[i]];
+	  fdmsgcopy->charge[i] = fdmsg->charge[partsToSend[i]];
+	  fdmsgcopy->coords[i] = fdmsg->coords[partsToSend[i]];
+	  fdmsgcopy->vdw_type[i] = fdmsg->vdw_type[partsToSend[i]];
+	}
+	fdmsgcopy->length = numSend;
 	pe = (++currPe) % numPes;
 	patchArray(x, y, z).insert(fdmsgcopy, pe);
       }
