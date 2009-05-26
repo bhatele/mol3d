@@ -1,5 +1,5 @@
 OPTS=-g
-CHARMC=~/charm/bin/charmc $(OPTS)
+CHARMC=~/work/mol3dcharm/bin/charmc $(OPTS)
 
 default: testInsert
 

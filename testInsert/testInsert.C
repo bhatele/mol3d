@@ -40,6 +40,7 @@ Main::Main(CkArgMsg* msg){
       }
     }
   }
+  elementsArray.doneInserting();
   CkPrintf("elements created\n");
 }
 
