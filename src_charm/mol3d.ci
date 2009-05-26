@@ -77,9 +77,7 @@ mainmodule mol3d {
 //  };
 
   array [3D] Patch {
-    //entry Patch(FileDataMsg* fdmsg);
-    entry Patch();
-    entry void Iinsert(FileDataMsg* fdmsg);
+    entry Patch(FileDataMsg* fdmsg);
     entry void start();
     entry void createComputes();
     entry void createSection();

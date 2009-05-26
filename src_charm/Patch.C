@@ -64,9 +64,7 @@ extern /* readonly */ double A;
 extern /* readonly */ double B;
 
 // Default constructor
-Patch::Patch(){}
-//Patch::Patch(FileDataMsg* fdmsg) {
-void Patch::Iinsert(FileDataMsg* fdmsg){
+Patch::Patch(FileDataMsg* fdmsg) {
   int i;
 
   // Particle initialization

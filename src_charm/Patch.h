@@ -99,9 +99,7 @@ class Patch : public CBase_Patch {
     CProxySection_Compute mCastSecProxy;
 
   public:
-    //Patch(FileDataMsg *fdmsg);
-    Patch();
-    void Iinsert(FileDataMsg *fdmsg);
+    Patch(FileDataMsg *fdmsg);
     Patch(CkMigrateMessage *msg);
     ~Patch();
 
