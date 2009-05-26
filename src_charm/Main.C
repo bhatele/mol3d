@@ -123,9 +123,9 @@ Main::Main(CkArgMsg* msg) {
 
   // initializing the 3D patch array
 
-  // patchArray = CProxy_Patch::ckNew(fdmsg, patchArrayDimX, patchArrayDimY, patchArrayDimZ);
+   patchArray = CProxy_Patch::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
 
-  patchArray = CProxy_Patch::ckNew();
+  //patchArray = CProxy_Patch::ckNew();
 
   CkVec<int> partsToSend;
   int numSend;
@@ -149,9 +149,9 @@ Main::Main(CkArgMsg* msg) {
 	}
 	fdmsgcopy->length = numSend;
 	pe = (++currPe) % numPes;
-	patchArray(x, y, z).insert(fdmsgcopy, pe);
+	patchArray(x, y, z).Iinsert(fdmsgcopy);//, pe);
       }
-  patchArray.doneInserting();
+  //patchArray.doneInserting();
   CkPrintf("%d PATCHES CREATED\n", patchArrayDimX * patchArrayDimY * patchArrayDimZ);
 
 #ifdef USE_SECTION_MULTICAST
