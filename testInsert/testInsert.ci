@@ -1,0 +1,19 @@
+mainmodule testInsert {
+  readonly CProxy_Main mainProxy;
+  readonly CProxy_Elements elementsArray;
+
+  mainchare Main {
+    entry Main(CkArgMsg* msg);
+    entry void checkIn();
+  };
+
+  message dataMsg{
+    int stuff[];
+  };
+
+  array [3D] Elements {
+    entry Elements(dataMsg *msg);
+  };
+}
+
+

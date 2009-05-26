@@ -23,9 +23,9 @@
 #include "ConfigList.h"
 #include "molfile_plugin.h"
 #include "PluginIOMgr.h"
-#ifdef USE_SECTION_MULTICAST
+//#ifdef USE_SECTION_MULTICAST
   #include "ckmulticast.h"
-#endif
+//#endif
 
 /* readonly */ CProxy_Main mainProxy;
 /* readonly */ CProxy_Patch patchArray;
