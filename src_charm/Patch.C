@@ -194,7 +194,6 @@ void Patch::createSection() {
   mCastSecProxy.ckSectionDelegate(mCastGrp);
 
   contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
-	//CkPrintf("%E \n", f);
 #endif
 }
 
@@ -216,6 +215,17 @@ void Patch::start() {
     msg->doAtSync = false;
     if (stepCount == 0 || ((stepCount % migrateStepCount == 1) && stepCount > 1)){
       msg->updateList = true;
+      if (stepCount > 0 && migrateStepCount*1024 % (stepCount-1) == 0){
+	CkVec<CkArrayIndex6D> elems;
+        for (int num=0; num<NUM_NEIGHBORS; num++)
+        elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
+
+        CkArrayID computeArrayID = computeArray.ckGetArrayID();
+        mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size());
+
+        CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+        mCastSecProxy.ckSectionDelegate(mCastGrp);
+      }
     }
     else{
       msg->updateList = false;
