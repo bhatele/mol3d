@@ -21,7 +21,7 @@ cp $PLUGSRC/hash.c .
 cp $PLUGSRC/hash.h .
 cp $SRC/InfoStream.C .
 cp $SRC/InfoStream.h .
-cp $PLUGSRC/jsplugin.c .
+#cp $PLUGSRC/jsplugin.c .
 cp $PLUGSRC/largefiles.h .
 cp $PLUGINC/libmolfile_plugin.h .
 cp $SRC/Lattice.h .
