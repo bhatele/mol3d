@@ -192,6 +192,7 @@ void Patch::createSection() {
 
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   mCastSecProxy.ckSectionDelegate(mCastGrp);
+  mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
 
   contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
 #endif
@@ -215,6 +216,7 @@ void Patch::start() {
     msg->doAtSync = false;
     if (stepCount == 0 || ((stepCount % migrateStepCount == 1) && stepCount > 1)){
       msg->updateList = true;
+/*#ifdef USE_SECTION_MULTICAST
       if (stepCount > 0 && migrateStepCount*1024 % (stepCount-1) == 0){
 	CkVec<CkArrayIndex6D> elems;
         for (int num=0; num<NUM_NEIGHBORS; num++)
@@ -226,6 +228,7 @@ void Patch::start() {
         CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
         mCastSecProxy.ckSectionDelegate(mCastGrp);
       }
+#endif*/
     }
     else{
       msg->updateList = false;
@@ -277,9 +280,27 @@ void Patch::start() {
 #endif
 }
 
+//reduction to update forces coming from a compute
+void Patch::reduceForces(CkReductionMsg *msg) {
+  int i, lengthUp;
+  forceCount+=NUM_NEIGHBORS;
+  int* forces = (int*)msg->getData();
+  lengthUp = msg->getSize()/sizeof(BigReal);
+  //CkPrintf("lengthup = %d numparts = %d\n",lengthUp, particles.length());
+  for(i = 0; i < lengthUp; i+=3){
+    particles[i/3].fx += forces[i];
+    particles[i/3].fy += forces[i+1];
+    particles[i/3].fz += forces[i+2];
+  }
+  applyForces();
+  delete msg;
+}
+
+
+
 // Function to update forces coming from a compute
 void Patch::receiveForces(ParticleForceMsg *updates) {
-  int i, x, y, z, x1, y1, z1;
+  int i;
   // incrementing the counter for receiving updates
   forceCount++;
 
@@ -289,7 +310,13 @@ void Patch::receiveForces(ParticleForceMsg *updates) {
     particles[i].fy += updates->forces[i].y;
     particles[i].fz += updates->forces[i].z;
   }
+  delete updates;
+  applyForces();
+}
 
+
+void Patch::applyForces(){
+  int i, x, y, z, x1, y1, z1;
   // if all forces are received, then it must recompute particles location
   if (forceCount == NUM_NEIGHBORS) {
     CkVec<Particle> outgoing[NUM_NEIGHBORS];
@@ -332,7 +359,6 @@ void Patch::receiveForces(ParticleForceMsg *updates) {
     thisProxy(x, y, z).checkNextStep();
   }
 
-  delete updates;
 }
 
 void Patch::migrateToPatch(Particle p, int &px, int &py, int &pz) {

@@ -48,6 +48,7 @@ class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
     bool doAtSync;
 
     void pup(PUP::er &p){
+     // CkMcastBaseMsg::pup(p);
       CMessage_ParticleDataMsg::pup(p);
       p | lengthAll;
       p | x; p | y; p | z;
@@ -93,6 +94,7 @@ class Patch : public CBase_Patch {
  
     void migrateToPatch(Particle p, int &px, int &py, int &pz);
     void updateProperties();	// updates properties after receiving forces from computes
+    void applyForces();
     void limitVelocity(Particle &p);
     Particle& wrapAround(Particle &p);
     void print();		// prints all its particles
@@ -107,6 +109,7 @@ class Patch : public CBase_Patch {
     void createComputes();
     void createSection();
     void receiveParticles(CkVec<Particle> &);
+    void reduceForces(CkReductionMsg *msg);
     void receiveForces(ParticleForceMsg *updates);
     void checkNextStep();	// checks whether to continue with next step
 #ifdef RUN_LIVEVIZ

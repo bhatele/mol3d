@@ -13,6 +13,7 @@
 extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Patch patchArray;
 extern /* readonly */ CProxy_Compute computeArray;
+extern /* readonly */ CkGroupID mCastGrpID;
 
 extern /* readonly */ vdwParams *vdwTable;
 
@@ -32,7 +33,7 @@ extern /* readonly */ BigReal stepTime;
 //extern /* readonly */ double B;			// Force Calculation parameter 2
 
 //calculate pair forces using pairlists
-inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second, CkVec<int> *pairList, int *numLists) {
+inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second, CkVec<int> *pairList, int *numLists, CkSectionInfo* cookie1, CkSectionInfo* cookie2) {
   int i, j, jpart, ptpCutOffSqd, diff;
   int firstLen = first->lengthAll;
   int secondLen = second->lengthAll;
@@ -130,8 +131,30 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
       }
     }
   }
+#ifdef USE_SECTION_MULTICAST
+  CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+  CkGetSectionInfo(*cookie1, first);
+  //double might be incorrect here
+  //double *forceArr = new double[3*firstmsg->lengthUpdates];
+  //for (int i = 0; i < firstmsg->lengthUpdates; i++){
+    //forceArr[3*i] = firstmsg->forces[i].x;
+    //forceArr[3*i+1] = firstmsg->forces[i].y;
+    //forceArr[3*i+2] = firstmsg->forces[i].z;
+  //}
+  mCastGrp->contribute(sizeof(BigReal)*3*firstmsg->lengthUpdates, firstmsg->forces, CkReduction::sum_double, *cookie1);
+  CkGetSectionInfo(*cookie2, second);
+  //double might be incorrect here
+  //double *forceArr2 = new double[3*secondmsg->lengthUpdates];
+  //for (int i = 0; i < secondmsg->lengthUpdates; i++){
+    //forceArr2[3*i] = secondmsg->forces[i].x;
+    //forceArr2[3*i+1] = secondmsg->forces[i].y;
+    //forceArr2[3*i+2] = secondmsg->forces[i].z;
+  //}
+  mCastGrp->contribute(sizeof(BigReal)*3*secondmsg->lengthUpdates, secondmsg->forces, CkReduction::sum_double, *cookie2);
+#else
   patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
   patchArray(second->x, second->y, second->z).receiveForces(secondmsg);
+#endif
   if (first->deleteList){
     for (i = 0; i < firstLen; i++){
       pairList[i].removeAll();
@@ -228,7 +251,7 @@ inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second) {
 }
 
 // Local function to compute all the interactions between pairs of particles in two sets
-inline void calcInternalForces(ParticleDataMsg* first) {
+inline void calcInternalForces(ParticleDataMsg* first, CkSectionInfo *cookie1) {
   int i, j, ptpCutOffSqd;
   int firstLen = first->lengthAll;
   BigReal powTwenty, firstx, firsty, firstz, rx, ry, rz, r, rsqd, fx, fy, fz, f, fr, eField, constants;
@@ -283,7 +306,21 @@ inline void calcInternalForces(ParticleDataMsg* first) {
       }
     }
   }
+#ifdef USE_SECTION_MULTICAST
+  CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+  //CkGetSectionInfo(cookie1, first);
+  //double might be incorrect here
+  //double *forceArr = new double[3*firstmsg->lengthUpdates];
+  //for (int i = 0; i < firstmsg->lengthUpdates; i++){
+    //forceArr[3*i] = firstmsg->forces[i].x;
+    //forceArr[3*i+1] = firstmsg->forces[i].y;
+    //forceArr[3*i+2] = firstmsg->forces[i].z;
+  //}
+  //CkPrintf("lengthupdates = %d\n", firstmsg->lengthUpdates);
+  mCastGrp->contribute(sizeof(BigReal)*3*firstmsg->lengthUpdates, firstmsg->forces, CkReduction::sum_double, *cookie1);
+#else
   patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
+#endif
   delete first;
 }
 

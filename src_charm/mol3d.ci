@@ -82,6 +82,7 @@ mainmodule mol3d {
     entry void createComputes();
     entry void createSection();
     entry void receiveForces(ParticleForceMsg *updates);
+    entry void reduceForces(CkReductionMsg *msg);
     entry void receiveParticles(CkVec<Particle> updates);
     entry [local] void checkNextStep();
     // entry void requestNextFrame(liveVizRequestMsg *m);

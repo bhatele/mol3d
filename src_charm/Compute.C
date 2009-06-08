@@ -17,13 +17,16 @@
 #include "mol3d.decl.h"
 #include "Patch.h"
 #include "Compute.h"
+#include "ckmulticast.h"
 #include "nonbonded.h"
 #include "ConfigList.h"
 //#include "sqrtTable.h"
 
+
 extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Patch patchArray;
 extern /* readonly */ CProxy_Compute computeArray;
+extern /* readonly */ CkGroupID mCastGrpID;
 
 extern /* readonly */ sqrtTable *rootTable;
 
@@ -59,7 +62,8 @@ void Compute::interact(ParticleDataMsg *msg){
     if (msg->doAtSync)
       AtSync();
     bmsgLenAll = -1;
-    calcInternalForces(msg);
+    CkGetSectionInfo(cookie1,msg);
+    calcInternalForces(msg, &cookie1);
   } else {
     if (cellCount == 0) {
       bufferedMsg = msg;
@@ -68,14 +72,23 @@ void Compute::interact(ParticleDataMsg *msg){
     } else if (cellCount == 1) {
       // if both particle sets are received, compute interaction
       cellCount = 0;
-      bmsgLenAll = -1;
       if (msg->doAtSync)
 	AtSync();
+      bmsgLenAll = -1;
       if (usePairLists){
-	if (bufferedMsg->lengthAll <= msg->lengthAll)
-	  pairList = calcPairForcesPL(bufferedMsg, msg, pairList, &numLists);
-	else
-	  pairList = calcPairForcesPL(msg, bufferedMsg, pairList, &numLists);
+//	if (bufferedMsg->lengthAll == msg->lengthAll){
+	  if (bufferedMsg->x*patchArrayDimY*patchArrayDimZ + bufferedMsg->y*patchArrayDimZ + bufferedMsg->z < msg->x*patchArrayDimY*patchArrayDimZ + msg->y*patchArrayDimZ + msg->z){ 
+	    if (bufferedMsg->lengthAll <= msg->lengthAll)
+	      pairList = calcPairForcesPL(bufferedMsg, msg, pairList, &numLists, &cookie1, &cookie2);
+	    else
+	      pairList = calcPairForcesPL(msg, bufferedMsg, pairList, &numLists, &cookie2, &cookie1);
+	  }
+	  else{
+	    if (bufferedMsg->lengthAll <= msg->lengthAll)
+	      pairList = calcPairForcesPL(bufferedMsg, msg, pairList, &numLists, &cookie2, &cookie1);
+	    else
+	      pairList = calcPairForcesPL(msg, bufferedMsg, pairList, &numLists, &cookie1, &cookie2);
+	  }
       }
       else {
 	if (bufferedMsg->lengthAll <= msg->lengthAll)

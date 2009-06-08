@@ -61,6 +61,8 @@ class Compute : public CBase_Compute {
     int bmsgLenAll;
     ParticleDataMsg *bufferedMsg;
     CkVec<int> *pairList;
+    CkSectionInfo cookie1;
+    CkSectionInfo cookie2;
 
   public:
     Compute();
@@ -73,6 +75,8 @@ class Compute : public CBase_Compute {
 
     void pup(PUP::er &p) {
       CBase_Compute::pup(p);
+      p | cookie1;
+      p | cookie2;
       p | cellCount;
       p | numLists;
       p | bmsgLenAll;

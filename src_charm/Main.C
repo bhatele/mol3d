@@ -103,6 +103,8 @@ Main::Main(CkArgMsg* msg) {
   mainProxy = thisProxy;
   phase = 0;
 
+  int bFactor = 2;
+
 
   int numPes = CkNumPes();
   int currPe = -1, pe;
@@ -116,6 +118,7 @@ Main::Main(CkArgMsg* msg) {
     if (simParams->paraTypeCharmmOn || simParams->paraTypeXplorOn)
       readParameterFile(sl_parameters, simParams);
   }
+  if (msg->argc > 2) bFactor = atoi(msg->argv[2]);
 
 
   //reading data
@@ -159,7 +162,7 @@ Main::Main(CkArgMsg* msg) {
 
 #ifdef USE_SECTION_MULTICAST
   // initializing the CkMulticastMgr
-  mCastGrpID = CProxy_CkMulticastMgr::ckNew();
+  mCastGrpID = CProxy_CkMulticastMgr::ckNew(bFactor);
 #endif
 
   // initializing the 6D compute array
