@@ -42,7 +42,9 @@
 /* readonly */ int patchArrayDimX;	// Number of Chares in X
 /* readonly */ int patchArrayDimY;	// Number of Chares in Y
 /* readonly */ int patchArrayDimZ;	// Number of Chares in Z
-/* readonly */ int patchSize;
+/* readonly */ int patchSizeX;
+/* readonly */ int patchSizeY;
+/* readonly */ int patchSizeZ;
 /* readonly */ int ptpCutOff;
 /* readonly */ int patchMargin;
 /* readonly */ int patchOriginX;
@@ -61,6 +63,11 @@
 /* readonly */ BigReal stepTime; 
 /* readonly */ BigReal timeDelta;
 /* readonly */ bool usePairLists;
+/* readonly */ bool twoAwayX;
+/* readonly */ int numNbrs;
+/* readonly */ int nbrsX;
+/* readonly */ int nbrsY;
+/* readonly */ int nbrsZ;
 
 /* readonly */ double A = 1.60694452*pow(10, -134);			// Force Calculation parameter 1
 /* readonly */ double B = 1.031093844*pow(10, -77);			// Force Calculation parameter 2
@@ -77,7 +84,9 @@ Main::Main(CkArgMsg* msg) {
   patchArrayDimZ = PATCHARRAY_DIM_Z;
   ptpCutOff = PTP_CUT_OFF;
   patchMargin = PATCH_MARGIN;
-  patchSize = PATCH_SIZE;
+  patchSizeX = PATCH_SIZE_X;
+  patchSizeY = PATCH_SIZE_Y;
+  patchSizeZ = PATCH_SIZE_Z;
   patchOriginX = PATCH_ORIGIN_X;
   patchOriginY = PATCH_ORIGIN_Y;
   patchOriginZ = PATCH_ORIGIN_Z;
@@ -94,6 +103,11 @@ Main::Main(CkArgMsg* msg) {
   structureFilename = STRUCTURE_FILENAME;
   //paramsFileName = PARAMS_FILENAME;
   timeDelta = DEFAULT_DELTA;
+  numNbrs = NUM_NEIGHBORS;
+  nbrsX = NBRS_X;
+  nbrsY = NBRS_Y;
+  nbrsZ = NBRS_Z;
+  twoAwayX = false;
 
   simParams = new SimParameters();  
   simParams->paraTypeCharmmOn = false;
@@ -139,8 +153,8 @@ Main::Main(CkArgMsg* msg) {
       for (int z=0; z<patchArrayDimZ; z++) {
 	partsToSend.removeAll();
 	for (int i = 0; i < numParts; i++){
-	  if (((int)((fdmsg->coords[i].x - patchOriginX) / patchSize)) == x && ((int)((fdmsg->coords[i].y-patchOriginY) / patchSize)) == y
-	     && ((int)((fdmsg->coords[i].z-patchOriginZ) / patchSize)) == z) 
+	  if (((int)((fdmsg->coords[i].x - patchOriginX) / patchSizeX)) == x && ((int)((fdmsg->coords[i].y-patchOriginY) / patchSizeY)) == y
+	     && ((int)((fdmsg->coords[i].z-patchOriginZ) / patchSizeZ)) == z) 
 	    partsToSend.push_back(i);
 	}
 	numSend = partsToSend.size();
@@ -230,6 +244,12 @@ void Main::readConfigFile(const char* filename){
   if (sl_numsteps != NULL)
     finalStepCount = atoi(sl_numsteps->data);
   
+  const StringList* sl_twoawayx = cfg->find("twoAwayX");
+  if (sl_twoawayx != NULL)
+    twoAwayX = sl_twoawayx->data[0] == 'y';
+  if (twoAwayX)
+    CkPrintf("performing 2-away X decomposition\n");
+  
   const StringList* sl_stepspercycle = cfg->find("stepspercycle");
   if (sl_stepspercycle != NULL)
     migrateStepCount = atoi(sl_stepspercycle->data);
@@ -241,8 +261,17 @@ void Main::readConfigFile(const char* filename){
   const StringList* sl_margin = cfg->find("margin");
   if (sl_margin != NULL)
     patchMargin = atoi(sl_margin->data);
-  
-  patchSize = patchMargin + ptpCutOff;
+
+  if (twoAwayX) { 
+    patchSizeX = (patchMargin + ptpCutOff)/2;
+    nbrsX = 5;
+  }
+  else
+    patchSizeX = patchMargin + ptpCutOff;
+  patchSizeY = patchMargin + ptpCutOff;
+  patchSizeZ = patchMargin + ptpCutOff;
+
+  numNbrs = nbrsX * nbrsY * nbrsZ;
 
   const StringList* sl_timestep = cfg->find("timestep");
   if (sl_timestep != NULL)
@@ -347,9 +376,9 @@ FileDataMsg* Main::readParticleData() {
     atomcoords += 3;
   }
   // determine appropriate patch dimensions
-  patchArrayDimX = ceil((maxX - minX) / patchSize);
-  patchArrayDimY = ceil((maxY - minY) / patchSize);
-  patchArrayDimZ = ceil((maxZ - minZ) / patchSize);
+  patchArrayDimX = ceil((maxX - minX) / patchSizeX);
+  patchArrayDimY = ceil((maxY - minY) / patchSizeY);
+  patchArrayDimZ = ceil((maxZ - minZ) / patchSizeZ);
   patchOriginX = (int)minX;
   patchOriginY = (int)minY;
   patchOriginZ = (int)minZ;

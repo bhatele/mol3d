@@ -15,7 +15,9 @@ mainmodule mol3d {
   readonly int patchArrayDimX;	// X dimension of the Patch array 
   readonly int patchArrayDimY;	// Y dimension of the Patch array
   readonly int patchArrayDimZ;	// Y dimension of the Patch array
-  readonly int patchSize;	// size of each Patch
+  readonly int patchSizeX;	// size of each Patch
+  readonly int patchSizeY;	// size of each Patch
+  readonly int patchSizeZ;	// size of each Patch
   readonly int ptpCutOff;	// cut off for atom to atom forces
   readonly int patchMargin;	// difference between patchSize and ptpCutOff
   readonly int patchOriginX;    // X-coor of patch origin
@@ -36,7 +38,11 @@ mainmodule mol3d {
   readonly double A;		// LJ parameter
   readonly double B;		// LJ parameter
   readonly bool usePairLists;	// determines whether or not to use pairlists for point to point force calculations
-
+  readonly bool twoAwayX;	// determines whether patches can be divided into half
+  readonly int numNbrs;	
+  readonly int nbrsX;	
+  readonly int nbrsY;	
+  readonly int nbrsZ;	
   
 
   mainchare Main {

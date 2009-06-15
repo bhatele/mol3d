@@ -40,7 +40,9 @@ extern /* readonly */ int numParts;
 extern /* readonly */ int patchArrayDimX;	// Number of Chares in X
 extern /* readonly */ int patchArrayDimY;	// Number of Chares in Y
 extern /* readonly */ int patchArrayDimZ;	// Number of Chares in Z
-extern /* readonly */ int patchSize;
+extern /* readonly */ int patchSizeX;
+extern /* readonly */ int patchSizeY;
+extern /* readonly */ int patchSizeZ;
 extern /* readonly */ int ptpCutOff;
 extern /* readonly */ int patchMargin;
 extern /* readonly */ int patchOriginX;
@@ -59,6 +61,11 @@ extern /* readonly */ int finalStepCount;
 extern /* readonly */ BigReal stepTime; 
 extern /* readonly */ BigReal timeDelta;
 extern /* readonly */ bool usePairLists;
+extern /* readonly */ bool twoAwayX;
+extern /* readonly */ int numNbrs;
+extern /* readonly */ int nbrsX;
+extern /* readonly */ int nbrsY;
+extern /* readonly */ int nbrsZ;
 
 extern /* readonly */ double A;
 extern /* readonly */ double B;
@@ -120,6 +127,11 @@ void Patch::createComputes() {
   // For Round Robin insertion
   int numPes = CkNumPes();
   int currPe = CkMyPe();
+
+  computesList = new int*[numNbrs];
+  for (int i =0; i < numNbrs; i++){
+    computesList[i] = new int[6];
+  }
  
   /*  The computes X are inserted by a given patch:
    *
@@ -130,51 +142,100 @@ void Patch::createComputes() {
    */
 
   // these computes will be created by other patches
-  for (num=0; num<NUM_NEIGHBORS; num++) {
-    dx = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
-    dy = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
-    dz = num % NBRS_Z                       - NBRS_Z/2;
+  for (num=0; num<numNbrs; num++) {
+    dx = num / (nbrsY * nbrsZ)            - nbrsX/2;
+    dy = (num % (nbrsY * nbrsZ)) / nbrsZ - nbrsY/2;
+    dz = num % nbrsZ                       - nbrsZ/2;
 
+    
     if (dx == 0) {
       px1 = px2 = x;
 
       if (dy == 0) { 
 	py1 = py2 = y;
 	if (dz == 0) { pz1 = pz2 = z; }
-	if (dz > 0) { (z >= patchArrayDimZ - NBRS_Z/2) ? ( pz1 = WRAP_Z(z+dz), pz2 = z ) : ( pz1 = z, pz2 = z+dz ); }
-	if (dz < 0) { (z < NBRS_Z/2) ? ( pz1 = z, pz2 = WRAP_Z(z+dz) ) : ( pz1 = z+dz, pz2 = z ); }
+	if (dz > 0) { 
+	  pz1 = z;
+	  pz2 = WRAP_Z(z+dz);
+	}
+	if (dz > 0){
+	  pz2 = z;
+	  pz1 = WRAP_Z(z+dz);
+	}
       }
 
       if (dy > 0) { 
-	(y >= patchArrayDimY - NBRS_Y/2) ? 
+	py2 = WRAP_Y(y+dy);
+	pz2 = WRAP_Z(z+dz);
+	py1 = y;
+	pz1 = z; 
+      }
+      
+      if (dy < 0) { 
+	py1 = WRAP_Y(y+dy);
+	pz1 = WRAP_Z(z+dz);
+	py2 = y;
+	pz2 = z; 
+      }
+    }
+
+    if (dx > 0){
+      px2 = WRAP_X(x+dx);
+      py2 = WRAP_Y(y+dy);
+      pz2 = WRAP_Z(z+dz);
+      px1 = x;
+      py1 = y;
+      pz1 = z; 
+    }
+
+    if (dx < 0){
+      px1 = WRAP_X(x+dx);
+      py1 = WRAP_Y(y+dy);
+      pz1 = WRAP_Z(z+dz);
+      px2 = x;
+      py2 = y;
+      pz2 = z; 
+    }
+    /*if (dx == 0) {
+      px1 = px2 = x;
+
+      if (dy == 0) { 
+	py1 = py2 = y;
+	if (dz == 0) { pz1 = pz2 = z; }
+	if (dz > 0) { (z >= patchArrayDimZ - nbrsZ/2) ? ( pz1 = WRAP_Z(z+dz), pz2 = z ) : ( pz1 = z, pz2 = z+dz ); }
+	if (dz < 0) { (z < nbrsZ/2) ? ( pz1 = z, pz2 = WRAP_Z(z+dz) ) : ( pz1 = z+dz, pz2 = z ); }
+      }
+
+      if (dy > 0) { 
+	(y >= patchArrayDimY - nbrsY/2) ? 
 	( py1 = WRAP_Y(y+dy), pz1 = WRAP_Z(z+dz), py2 = y, pz2 = z ) : 
 	( py1 = y, pz1 = z, py2 = y+dy, pz2 = WRAP_Z(z+dz) );
       }
 
       if (dy < 0) { 
-	(y < NBRS_Y/2) ? 
+	(y < nbrsY/2) ? 
 	( py1 = y, pz1 = z, py2 = WRAP_Y(y+dy), pz2 = WRAP_Z(z+dz) ) : 
 	( py1 = y+dy, pz1 = WRAP_Z(z+dz), py2 = y, pz2 = z ); 
       }
     } // dx == 0
 
     if (dx > 0) {
-      (x >= patchArrayDimX - NBRS_X/2) ? 
+      (x >= patchArrayDimX - nbrsX/2) ? 
       ( px1 = WRAP_X(x+dx), py1 = WRAP_Y(y+dy), pz1 = WRAP_Z(z+dz), px2 = x, py2 = y, pz2 = z ) : 
       ( px1 = x, py1 = y, pz1 = z, px2 = WRAP_X(x+dx), py2 = WRAP_Y(y+dy), pz2 = WRAP_Z(z+dz) ) ;
     }
 
     if (dx < 0) {
-      (x < NBRS_X/2) ? 
+      (x < nbrsX/2) ? 
       ( px1 = x, py1 = y, pz1 = z, px2 = WRAP_X(x+dx), py2 = WRAP_Y(y+dy), pz2 = WRAP_Z(z+dz) ) :
       ( px1 = WRAP_X(x+dx), py1 = WRAP_Y(y+dy), pz1 = WRAP_Z(z+dz), px2 = x, py2 = y, pz2 = z ) ;
-    }
+    }*/
 
     computesList[num][0] = px1; computesList[num][1] = py1; computesList[num][2] = pz1; 
     computesList[num][3] = px2; computesList[num][4] = py2; computesList[num][5] = pz2;
 
     //insert only the upper right half computes
-    if (num >= NUM_NEIGHBORS/2)
+    if (num >= numNbrs/2)
       computeArray(px1, py1, pz1, px2, py2, pz2).insert((++currPe) % numPes);
   } // end of for loop
 
@@ -184,7 +245,7 @@ void Patch::createComputes() {
 void Patch::createSection() {
 #ifdef USE_SECTION_MULTICAST
   CkVec<CkArrayIndex6D> elems;
-  for (int num=0; num<NUM_NEIGHBORS; num++)
+  for (int num=0; num<numNbrs; num++)
     elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
 
   CkArrayID computeArrayID = computeArray.ckGetArrayID();
@@ -251,14 +312,14 @@ void Patch::start() {
 #else
   int px1, py1, pz1, px2, py2, pz2;
   
-  for(int num=0; num<NUM_NEIGHBORS; num++) {
+  for(int num=0; num<numNbrs; num++) {
     px1 = computesList[num][0];
     py1 = computesList[num][1];
     pz1 = computesList[num][2];
     px2 = computesList[num][3];
     py2 = computesList[num][4];
     pz2 = computesList[num][5];
-    if (num == NUM_NEIGHBORS-1)
+    if (num == numNbrs-1)
       computeArray(px1, py1, pz1, px2, py2, pz2).interact(msg);
     else {
       ParticleDataMsg* newMsg = new (len, len, len) ParticleDataMsg;
@@ -283,7 +344,7 @@ void Patch::start() {
 //reduction to update forces coming from a compute
 void Patch::reduceForces(CkReductionMsg *msg) {
   int i, lengthUp;
-  forceCount+=NUM_NEIGHBORS;
+  forceCount+=numNbrs;
   int* forces = (int*)msg->getData();
   lengthUp = msg->getSize()/sizeof(BigReal);
   //CkPrintf("lengthup = %d numparts = %d\n",lengthUp, particles.length());
@@ -318,8 +379,8 @@ void Patch::receiveForces(ParticleForceMsg *updates) {
 void Patch::applyForces(){
   int i, x, y, z, x1, y1, z1;
   // if all forces are received, then it must recompute particles location
-  if (forceCount == NUM_NEIGHBORS) {
-    CkVec<Particle> outgoing[NUM_NEIGHBORS];
+  if (forceCount == numNbrs) {
+    CkVec<Particle> outgoing[numNbrs];
 
     // Received all it's forces from the interactions.
     forceCount = 0;
@@ -336,16 +397,16 @@ void Patch::applyForces(){
 	migrateToPatch(particles[i], x1, y1, z1);
 	if(x1 !=0 || y1!=0 || z1 !=0) {
 	  //CkPrintf("PARTICLE MIGRATING!\n");
-	  outgoing[(x1+1)*NBRS_Y*NBRS_Z + (y1+1)*NBRS_Z + (z1+1)].push_back(wrapAround(particles[i]));
+	  outgoing[(x1+1)*nbrsY*nbrsZ + (y1+1)*nbrsZ + (z1+1)].push_back(wrapAround(particles[i]));
 	  particles.remove(i);
 	}
       }
     
    
-      for(int num=0; num<NUM_NEIGHBORS; num++) {
-	x1 = num / (NBRS_Y * NBRS_Z)            - NBRS_X/2;
-	y1 = (num % (NBRS_Y * NBRS_Z)) / NBRS_Z - NBRS_Y/2;
-	z1 = num % NBRS_Z                       - NBRS_Z/2;
+      for(int num=0; num<numNbrs; num++) {
+	x1 = num / (nbrsY * nbrsZ)            - nbrsX/2;
+	y1 = (num % (nbrsY * nbrsZ)) / nbrsZ - nbrsY/2;
+	z1 = num % nbrsZ                       - nbrsZ/2;
 
 	patchArray(WRAP_X(x+x1), WRAP_Y(y+y1), WRAP_Z(z+z1)).receiveParticles(outgoing[num]);
       }
@@ -364,20 +425,20 @@ void Patch::applyForces(){
 void Patch::migrateToPatch(Particle p, int &px, int &py, int &pz) {
   // currently this is assuming that particles are
   // migrating only to the immediate neighbors
-  int x = thisIndex.x * patchSize + patchOriginX;
-  int y = thisIndex.y * patchSize + patchOriginY;
-  int z = thisIndex.z * patchSize + patchOriginZ;
+  int x = thisIndex.x * patchSizeX + patchOriginX;
+  int y = thisIndex.y * patchSizeY + patchOriginY;
+  int z = thisIndex.z * patchSizeZ + patchOriginZ;
 
   if (p.x < x) px = -1;
-  else if (p.x > x+patchSize) px = 1;
+  else if (p.x > x+patchSizeX) px = 1;
   else px = 0;
 
   if (p.y < y) py = -1;
-  else if (p.y > y+patchSize) py = 1;
+  else if (p.y > y+patchSizeY) py = 1;
   else py = 0;
 
   if (p.z < z) pz = -1;
-  else if (p.z > z+patchSize) pz = 1;
+  else if (p.z > z+patchSizeZ) pz = 1;
   else pz = 0;
 }
 
@@ -434,7 +495,7 @@ void Patch::receiveParticles(CkVec<Particle> &updates) {
 
   // if all the incoming particle updates have been received, we must check 
   // whether to proceed with next step
-  if(updateCount == NUM_NEIGHBORS ) {
+  if(updateCount == numNbrs ) {
     updateCount = 0;
     incomingFlag = true;
     checkNextStep();
@@ -494,12 +555,12 @@ void Patch::limitVelocity(Particle &p) {
 }
 
 Particle& Patch::wrapAround(Particle &p) {
-  if(p.x < patchOriginX) p.x += patchSize*patchArrayDimX;
-  if(p.y < patchOriginY) p.y += patchSize*patchArrayDimY;
-  if(p.z < patchOriginZ) p.z += patchSize*patchArrayDimZ;
-  if(p.x > patchOriginX + patchSize*patchArrayDimX) p.x -= patchSize*patchArrayDimX;
-  if(p.y > patchOriginY + patchSize*patchArrayDimY) p.y -= patchSize*patchArrayDimY;
-  if(p.z > patchOriginZ + patchSize*patchArrayDimZ) p.z -= patchSize*patchArrayDimZ;
+  if(p.x < patchOriginX) p.x += patchSizeX*patchArrayDimX;
+  if(p.y < patchOriginY) p.y += patchSizeY*patchArrayDimY;
+  if(p.z < patchOriginZ) p.z += patchSizeZ*patchArrayDimZ;
+  if(p.x > patchOriginX + patchSizeX*patchArrayDimX) p.x -= patchSizeX*patchArrayDimX;
+  if(p.y > patchOriginY + patchSizeY*patchArrayDimY) p.y -= patchSizeY*patchArrayDimY;
+  if(p.z > patchOriginZ + patchSizeZ*patchArrayDimZ) p.z -= patchSizeZ*patchArrayDimZ;
 
   return p;
 }
@@ -534,8 +595,8 @@ void Patch::requestNextFrame(liveVizRequestMsg *lvmsg) {
       color_pixel(intensity,myWidthPx,myHeightPx,j,i,0,0,0);	// black background
 
   for (int i=0; i < particles.length(); i++ ) {
-    int xpos = (int)((particles[i].x /(BigReal) (patchSize*patchArrayDimX)) * wdes) - sx;
-    int ypos = (int)((particles[i].y /(BigReal) (patchSize*patchArrayDimY)) * hdes) - sy;
+    int xpos = (int)((particles[i].x /(BigReal) (patchSizeX*patchArrayDimX)) * wdes) - sx;
+    int ypos = (int)((particles[i].y /(BigReal) (patchSizeY*patchArrayDimY)) * hdes) - sy;
 
     Color c(particles[i].id);
     color_pixel(intensity,myWidthPx,myHeightPx,xpos+1,ypos,c.R,c.B,c.G);

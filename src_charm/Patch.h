@@ -14,6 +14,8 @@
 #ifndef __PATCH_H__
 #define __PATCH_H__
 
+extern /*readonly*/ int numNbrs;
+
 class vdwParams : public CMessage_vdwParams {
   public:
     vdwPars *params;
@@ -89,7 +91,7 @@ class Patch : public CBase_Patch {
     int myNumParts;
     bool updateFlag;
     bool incomingFlag;
-    int computesList[NUM_NEIGHBORS][6];
+    int **computesList;
     
  
     void migrateToPatch(Particle p, int &px, int &py, int &pz);

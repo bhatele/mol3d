@@ -33,7 +33,9 @@ typedef double BigReal;
 #define PATCHARRAY_DIM_Z	3
 #define PTP_CUT_OFF		13  //Rc in NAMD, cut off for atom to atom interactions
 #define PATCH_MARGIN		0  //constant difference between cut off and patch size
-#define PATCH_SIZE		(PTP_CUT_OFF + PATCH_MARGIN)
+#define PATCH_SIZE_X		(PTP_CUT_OFF + PATCH_MARGIN)
+#define PATCH_SIZE_Y		(PTP_CUT_OFF + PATCH_MARGIN)
+#define PATCH_SIZE_Z		(PTP_CUT_OFF + PATCH_MARGIN)
 #define PATCH_ORIGIN_X		0
 #define PATCH_ORIGIN_Y		0
 #define PATCH_ORIGIN_Z		0
@@ -45,8 +47,8 @@ typedef double BigReal;
 #define PMEGRID_DIM_X           30
 #define PMEGRID_DIM_Y           30       //must be a multiple of CompArray and PatchArray dimensions
 #define PMEGRID_DIM_Z           30
-#define PME_CELL_SIZE           (PATCH_SIZE / (PMEGRID_DIM_X / PATCHARRAY_DIM_X)) //assumes cubic patch array  (careful with rounding)
-#define PME_CUT_OFF             PATCH_SIZE
+#define PME_CELL_SIZE           (PATCH_SIZE_X / (PMEGRID_DIM_X / PATCHARRAY_DIM_X)) //assumes cubic patch array  (careful with rounding)
+#define PME_CUT_OFF             PATCH_SIZE_X
 
 #define MIGRATE_STEPCOUNT	20
 #define DEFAULT_FINALSTEPCOUNT	101

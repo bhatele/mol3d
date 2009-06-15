@@ -24,7 +24,9 @@ extern /* readonly */ int numParts;
 extern /* readonly */ int patchArrayDimX;	// Number of Chare Rows
 extern /* readonly */ int patchArrayDimY;	// Number of Chare Columns
 extern /* readonly */ int patchArrayDimZ;
-extern /* readonly */ int patchSize;
+extern /* readonly */ int patchSizeX;
+extern /* readonly */ int patchSizeY;
+extern /* readonly */ int patchSizeZ;
 extern /* readonly */ int ptpCutOff;
 extern /* readonly */ int finalStepCount; 
 extern /* readonly */ BigReal stepTime; 
@@ -48,21 +50,21 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
   secondmsg->lengthUpdates = secondLen;
   //check for wrap around and adjust locations accordingly
   if (abs(first->x - second->x) > 1){
-    diff = patchSize * patchArrayDimX;
+    diff = patchSizeX * patchArrayDimX;
     if (second->x < first->x)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)
       first->coords[i].x += diff;
   }
   if (abs(first->y - second->y) > 1){
-    diff = patchSize * patchArrayDimY;
+    diff = patchSizeY * patchArrayDimY;
     if (second->y < first->y)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)
       first->coords[i].y += diff;
   }
   if (abs(first->z - second->z) > 1){
-    diff = patchSize * patchArrayDimZ;
+    diff = patchSizeZ * patchArrayDimZ;
     if (second->z < first->z)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)
@@ -185,21 +187,21 @@ inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second) {
   secondmsg->lengthUpdates = secondLen;
   //check for wrap around and adjust locations accordingly
   if (abs(first->x - second->x) > 1){
-    diff = patchSize * patchArrayDimX;
+    diff = patchSizeX * patchArrayDimX;
     if (second->x < first->x)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)
       first->coords[i].x += diff;
   }
   if (abs(first->y - second->y) > 1){
-    diff = patchSize * patchArrayDimY;
+    diff = patchSizeY * patchArrayDimY;
     if (second->y < first->y)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)
       first->coords[i].y += diff;
   }
   if (abs(first->z - second->z) > 1){
-    diff = patchSize * patchArrayDimZ;
+    diff = patchSizeZ * patchArrayDimZ;
     if (second->z < first->z)
       diff = -1 * diff; 
     for (i = 0; i < firstLen; i++)
