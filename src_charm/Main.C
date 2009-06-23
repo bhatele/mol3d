@@ -64,6 +64,8 @@
 /* readonly */ BigReal timeDelta;
 /* readonly */ bool usePairLists;
 /* readonly */ bool twoAwayX;
+/* readonly */ bool twoAwayY;
+/* readonly */ bool twoAwayZ;
 /* readonly */ int numNbrs;
 /* readonly */ int nbrsX;
 /* readonly */ int nbrsY;
@@ -108,6 +110,8 @@ Main::Main(CkArgMsg* msg) {
   nbrsY = NBRS_Y;
   nbrsZ = NBRS_Z;
   twoAwayX = false;
+  twoAwayY = false;
+  twoAwayZ = false;
 
   simParams = new SimParameters();  
   simParams->paraTypeCharmmOn = false;
@@ -209,7 +213,7 @@ void Main::startUpDone() {
   switch(phase) {
     case 0:
       computeArray.doneInserting();
-      CkPrintf("%d COMPUTES CREATED\n", (NUM_NEIGHBORS/2+1) * patchArrayDimX * patchArrayDimY * patchArrayDimZ);
+      CkPrintf("%d COMPUTES CREATED\n", (numNbrs/2+1) * patchArrayDimX * patchArrayDimY * patchArrayDimZ);
 #ifdef USE_SECTION_MULTICAST
       phase++;
       patchArray.createSection();
@@ -250,6 +254,18 @@ void Main::readConfigFile(const char* filename){
   if (twoAwayX)
     CkPrintf("performing 2-away X decomposition\n");
   
+  const StringList* sl_twoawayy = cfg->find("twoAwayY");
+  if (sl_twoawayy != NULL)
+    twoAwayY = sl_twoawayy->data[0] == 'y';
+  if (twoAwayY)
+    CkPrintf("performing 2-away Y decomposition\n");
+  
+  const StringList* sl_twoawayz = cfg->find("twoAwayZ");
+  if (sl_twoawayz != NULL)
+    twoAwayZ = sl_twoawayz->data[0] == 'y';
+  if (twoAwayZ)
+    CkPrintf("performing 2-away Z decomposition\n");
+  
   const StringList* sl_stepspercycle = cfg->find("stepspercycle");
   if (sl_stepspercycle != NULL)
     migrateStepCount = atoi(sl_stepspercycle->data);
@@ -268,8 +284,20 @@ void Main::readConfigFile(const char* filename){
   }
   else
     patchSizeX = patchMargin + ptpCutOff;
-  patchSizeY = patchMargin + ptpCutOff;
-  patchSizeZ = patchMargin + ptpCutOff;
+  
+  if (twoAwayY) { 
+    patchSizeY = (patchMargin + ptpCutOff)/2;
+    nbrsY = 5;
+  }
+  else
+    patchSizeY = patchMargin + ptpCutOff;
+  
+  if (twoAwayZ) { 
+    patchSizeZ = (patchMargin + ptpCutOff)/2;
+    nbrsZ = 5;
+  }
+  else
+    patchSizeZ = patchMargin + ptpCutOff;
 
   numNbrs = nbrsX * nbrsY * nbrsZ;
 

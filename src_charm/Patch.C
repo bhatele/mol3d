@@ -158,7 +158,7 @@ void Patch::createComputes() {
 	  pz1 = z;
 	  pz2 = WRAP_Z(z+dz);
 	}
-	if (dz > 0){
+	if (dz < 0){
 	  pz2 = z;
 	  pz1 = WRAP_Z(z+dz);
 	}
@@ -280,7 +280,7 @@ void Patch::start() {
 /*#ifdef USE_SECTION_MULTICAST
       if (stepCount > 0 && migrateStepCount*1024 % (stepCount-1) == 0){
 	CkVec<CkArrayIndex6D> elems;
-        for (int num=0; num<NUM_NEIGHBORS; num++)
+        for (int num=0; num<numNbrs; num++)
         elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
 
         CkArrayID computeArrayID = computeArray.ckGetArrayID();
@@ -288,6 +288,7 @@ void Patch::start() {
 
         CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
         mCastSecProxy.ckSectionDelegate(mCastGrp);
+	mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
       }
 #endif*/
     }

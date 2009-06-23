@@ -38,7 +38,9 @@ mainmodule mol3d {
   readonly double A;		// LJ parameter
   readonly double B;		// LJ parameter
   readonly bool usePairLists;	// determines whether or not to use pairlists for point to point force calculations
-  readonly bool twoAwayX;	// determines whether patches can be divided into half
+  readonly bool twoAwayX;	// determines whether patches can be divided into half in the x direction
+  readonly bool twoAwayY;	// determines whether patches can be divided into half in the y direction
+  readonly bool twoAwayZ;	// determines whether patches can be divided into half in the z direction
   readonly int numNbrs;	
   readonly int nbrsX;	
   readonly int nbrsY;	
