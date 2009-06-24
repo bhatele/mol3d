@@ -60,6 +60,8 @@
 /* readonly */ int pmeCutOff;
 /* readonly */ int migrateStepCount;
 /* readonly */ int finalStepCount; 
+/* readonly */ int firstLdbStep; 
+/* readonly */ int ldbPeriod; 
 /* readonly */ BigReal stepTime; 
 /* readonly */ BigReal timeDelta;
 /* readonly */ bool usePairLists;
@@ -102,6 +104,8 @@ Main::Main(CkArgMsg* msg) {
   pmeCutOff = PME_CUT_OFF;
   migrateStepCount = MIGRATE_STEPCOUNT;
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
+  firstLdbStep = DEFAULT_FIRST_LDB;
+  ldbPeriod = DEFAULT_LDB_PERIOD;
   structureFilename = STRUCTURE_FILENAME;
   //paramsFileName = PARAMS_FILENAME;
   timeDelta = DEFAULT_DELTA;
@@ -304,6 +308,14 @@ void Main::readConfigFile(const char* filename){
   const StringList* sl_timestep = cfg->find("timestep");
   if (sl_timestep != NULL)
     timeDelta = atof(sl_timestep->data);
+
+  const StringList* sl_firstLdbStep = cfg->find("firstLdbStep");
+  if (sl_firstLdbStep != NULL)
+    firstLdbStep = atof(sl_firstLdbStep->data);
+  
+  const StringList* sl_ldbPeriod = cfg->find("ldbPeriod");
+  if (sl_ldbPeriod != NULL)
+    ldbPeriod = atof(sl_ldbPeriod->data);
 
   sl_parameters = cfg->find("parameters");
 

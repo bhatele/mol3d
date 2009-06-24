@@ -33,6 +33,8 @@ mainmodule mol3d {
   readonly int pmeCutOff;       // PME calculation cut off radius
   readonly int migrateStepCount;// interval between patch migrations
   readonly int finalStepCount;	// number of steps at which the cells should stop computation
+  readonly int firstLdbStep;	// do load balancing after this many steps
+  readonly int ldbPeriod;	// do load balancing every period
   readonly BigReal stepTime;
   readonly BigReal timeDelta;	// real time per step
   readonly double A;		// LJ parameter

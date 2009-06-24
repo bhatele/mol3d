@@ -58,6 +58,8 @@ extern /* readonly */ BigReal pmeCellSize;
 extern /* readonly */ int pmeCutOff;
 extern /* readonly */ int migrateStepCount;
 extern /* readonly */ int finalStepCount; 
+extern /* readonly */ int firstLdbStep; 
+extern /* readonly */ int ldbPeriod; 
 extern /* readonly */ BigReal stepTime; 
 extern /* readonly */ BigReal timeDelta;
 extern /* readonly */ bool usePairLists;
@@ -296,11 +298,13 @@ void Patch::start() {
       msg->updateList = false;
       if (stepCount % migrateStepCount == 0){
 	msg->deleteList = true;
-	if (migrateStepCount*1024 % stepCount == 0)
-	  msg->doAtSync = true;
+	//if (migrateStepCount*1024 % stepCount == 0)
+	  //msg->doAtSync = true;
       }
     }
   }
+  if ((stepCount - firstLdbStep) % ldbPeriod == 0)
+    msg->doAtSync = true;
   for (int i = 0; i < len; i++){
     msg->coords[i].x = particles[i].x;
     msg->coords[i].y = particles[i].y;
