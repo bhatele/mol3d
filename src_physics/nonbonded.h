@@ -153,6 +153,8 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
     //forceArr2[3*i+2] = secondmsg->forces[i].z;
   //}
   mCastGrp->contribute(sizeof(BigReal)*3*secondmsg->lengthUpdates, secondmsg->forces, CkReduction::sum_double, *cookie2);
+  delete firstmsg;
+  delete secondmsg;
 #else
   patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
   patchArray(second->x, second->y, second->z).receiveForces(secondmsg);
@@ -320,6 +322,7 @@ inline void calcInternalForces(ParticleDataMsg* first, CkSectionInfo *cookie1) {
   //}
   //CkPrintf("lengthupdates = %d\n", firstmsg->lengthUpdates);
   mCastGrp->contribute(sizeof(BigReal)*3*firstmsg->lengthUpdates, firstmsg->forces, CkReduction::sum_double, *cookie1);
+  delete firstmsg;
 #else
   patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
 #endif
