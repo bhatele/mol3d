@@ -303,6 +303,11 @@ void Patch::start() {
       }
     }
   }
+  msg->lbOn = false;
+  if ((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0){
+    if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
+    msg->lbOn = true;
+  }
   if ((stepCount - firstLdbStep) % ldbPeriod == 0)
     msg->doAtSync = true;
   for (int i = 0; i < len; i++){
@@ -465,7 +470,7 @@ void Patch::checkNextStep(){
 
     if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0 && stepCount%100==0) {
       timer = CmiWallTimer();
-      CkPrintf("Step %d Benchmark Time %f ms/step\n", stepCount, ((timer - stepTime)/100)*1000);
+      CkPrintf("Step %d Benchmark Time %f ms/step, Total Time Elapsed %f ms\n", stepCount, ((timer - stepTime)/100)*1000, timer);
       stepTime = timer;
 //      if (stepCount == 300)
 //	traceBegin();
