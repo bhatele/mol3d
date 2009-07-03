@@ -93,7 +93,10 @@ class Patch : public CBase_Patch {
     int myNumParts;
     bool updateFlag;
     bool incomingFlag;
+    bool pause;
     int **computesList;
+    int resumeCount;
+    double loadTime;
     
  
     void migrateToPatch(Particle p, int &px, int &py, int &pz);
@@ -114,6 +117,7 @@ class Patch : public CBase_Patch {
     void createSection();
     void receiveParticles(CkVec<Particle> &);
     void reduceForces(CkReductionMsg *msg);
+    void resume();
     void receiveForces(ParticleForceMsg *updates);
     void checkNextStep();	// checks whether to continue with next step
 #ifdef RUN_LIVEVIZ

@@ -104,7 +104,8 @@ class Compute : public CBase_Compute {
 	pairList = NULL;
       }
       //CkPrintf("done pupping a compute \n");
-    }           
+    }
+    void ResumeFromSync();           
 };
 
 #endif

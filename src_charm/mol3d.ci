@@ -93,6 +93,7 @@ mainmodule mol3d {
     entry void createSection();
     entry void receiveForces(ParticleForceMsg *updates);
     entry void reduceForces(CkReductionMsg *msg);
+    entry void resume();
     entry void receiveParticles(CkVec<Particle> updates);
     entry [local] void checkNextStep();
     // entry void requestNextFrame(liveVizRequestMsg *m);
@@ -101,6 +102,7 @@ mainmodule mol3d {
   array [6D] Compute {
     entry Compute();
     entry void interact(ParticleDataMsg *msg);
+    entry void ResumeFromSync();
   };
 
 /*  array [3D] PMECompositor{

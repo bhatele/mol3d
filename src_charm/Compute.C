@@ -47,6 +47,7 @@ extern /* readonly */ double B;			// Force Calculation parameter 2
 
 // Compute - Default constructor
 Compute::Compute() {
+  LBTurnInstrumentOff();
   cellCount = 0;
   numLists = -1;
   bmsgLenAll = -1;
@@ -61,11 +62,13 @@ void Compute::interact(ParticleDataMsg *msg){
 
   // self interaction check
   if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
+    bmsgLenAll = -1;
     if (msg->doAtSync){
       LBTurnInstrumentOff();
       AtSync();
     }
-    bmsgLenAll = -1;
+    if (msg->lbOn)
+      LBTurnInstrumentOn();
     CkGetSectionInfo(cookie1,msg);
     calcInternalForces(msg, &cookie1);
   } else {
@@ -76,13 +79,13 @@ void Compute::interact(ParticleDataMsg *msg){
     } else if (cellCount == 1) {
       // if both particle sets are received, compute interaction
       cellCount = 0;
+      bmsgLenAll = -1;
       if (msg->doAtSync){
 	LBTurnInstrumentOff();
 	AtSync();
       }
       if (msg->lbOn)
 	LBTurnInstrumentOn();
-      bmsgLenAll = -1;
       if (usePairLists){
 //	if (bufferedMsg->lengthAll == msg->lengthAll){
 	  if (bufferedMsg->x*patchArrayDimY*patchArrayDimZ + bufferedMsg->y*patchArrayDimZ + bufferedMsg->z < msg->x*patchArrayDimY*patchArrayDimZ + msg->y*patchArrayDimZ + msg->z){ 
@@ -106,5 +109,14 @@ void Compute::interact(ParticleDataMsg *msg){
       }
       bufferedMsg = NULL;
     }
+  }
+}
+
+void Compute::ResumeFromSync(){
+  if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) 
+    patchArray(thisIndex.x1, thisIndex.y1, thisIndex.z1).resume();
+  else{
+    patchArray(thisIndex.x1, thisIndex.y1, thisIndex.z1).resume();
+    patchArray(thisIndex.x2, thisIndex.y2, thisIndex.z2).resume();
   }
 }

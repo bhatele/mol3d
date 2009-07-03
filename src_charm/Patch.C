@@ -74,8 +74,9 @@ extern /* readonly */ double B;
 
 // Default constructor
 Patch::Patch(FileDataMsg* fdmsg) {
+  LBTurnInstrumentOff();
   int i;
-
+  //double d1 = CmiWallTimer();
   // Particle initialization
   myNumParts = 0;
   for(i=0; i < fdmsg->length; i++) {
@@ -105,11 +106,14 @@ Patch::Patch(FileDataMsg* fdmsg) {
   updateCount = 0;
   forceCount = 0;
   stepCount = 0;
+  resumeCount = 0;
   updateFlag = false;
   incomingFlag = false;
+  pause = false;
   incomingParticles.resize(0);
   setMigratable(CmiFalse);
   delete fdmsg;
+  //loadTime = CmiWallTimer() - d1;
 }
 
 // Constructor for chare object migration
@@ -119,6 +123,7 @@ Patch::~Patch() {}
 
 
 void Patch::createComputes() {
+  //double d1 = CmiWallTimer();
   int num;  
   
   int x = thisIndex.x;
@@ -238,10 +243,11 @@ void Patch::createComputes() {
 
     //insert only the upper right half computes
     if (num >= numNbrs/2)
-      computeArray(px1, py1, pz1, px2, py2, pz2).insert((++currPe) % numPes);
+      computeArray(px1, py1, pz1, px2, py2, pz2).insert((++currPe)%numPes);
   } // end of for loop
 
   contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
+  //loadTime += CmiWallTimer()-d1;
 }
 
 void Patch::createSection() {
@@ -263,6 +269,7 @@ void Patch::createSection() {
 
 // Function to start interaction among particles in neighboring cells as well as its own particles
 void Patch::start() {
+  //double d1 = CmiWallTimer();
   int x = thisIndex.x;
   int y = thisIndex.y;
   int z = thisIndex.z;
@@ -304,12 +311,16 @@ void Patch::start() {
     }
   }
   msg->lbOn = false;
-  if ((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0){
+  if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0) || stepCount == 1){
     if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
     msg->lbOn = true;
   }
-  if ((stepCount - firstLdbStep) % ldbPeriod == 0)
+  if ((stepCount - firstLdbStep) % ldbPeriod == 0){
     msg->doAtSync = true;
+    pause = true;
+    //if (x+y+z < 3)
+      //CkPrintf("num particles on patch %d %d %d is %d\n",x,y,z,particles.size());
+  }
   for (int i = 0; i < len; i++){
     msg->coords[i].x = particles[i].x;
     msg->coords[i].y = particles[i].y;
@@ -349,10 +360,12 @@ void Patch::start() {
     } 
   }
 #endif
+  //loadTime += CmiWallTimer()-d1;
 }
 
 //reduction to update forces coming from a compute
 void Patch::reduceForces(CkReductionMsg *msg) {
+  //double d1 = CmiWallTimer();
   int i, lengthUp;
   forceCount+=numNbrs;
   int* forces = (int*)msg->getData();
@@ -365,6 +378,7 @@ void Patch::reduceForces(CkReductionMsg *msg) {
   }
   applyForces();
   delete msg;
+  //loadTime += CmiWallTimer()-d1;
 }
 
 
@@ -427,7 +441,9 @@ void Patch::applyForces(){
     updateFlag = true;
 	      
     // checking whether to proceed with next step
-    thisProxy(x, y, z).checkNextStep();
+    //the commented out line causes load balancing instrumentation bug, and isnt necessary I think
+    //thisProxy(x, y, z).checkNextStep();
+    checkNextStep();
   }
 
 }
@@ -454,6 +470,7 @@ void Patch::migrateToPatch(Particle p, int &px, int &py, int &pz) {
 
 // Function that checks whether it must start the following step or wait until other messages are received
 void Patch::checkNextStep(){
+  //double d1 = CmiWallTimer();
   int i;
   double timer;
 
@@ -489,8 +506,22 @@ void Patch::checkNextStep(){
       print();
       contribute(CkCallback(CkIndex_Main::allDone(), mainProxy)); 
     } else {
-      thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
+      if (!pause)
+	thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
+      else{
+	//loadTime += CmiWallTimer()-d1;
+	//CkPrintf("Patch %d on processor %d had load %f\n", thisIndex.x*patchArrayDimY*patchArrayDimZ + thisIndex.y*patchArrayDimZ + thisIndex.z, CkMyPe(), loadTime);
+	//loadTime = 0;
+      }
     }
+  }
+}
+
+void Patch::resume(){
+  if (++resumeCount == numNbrs){
+    pause = false;
+    thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
+    resumeCount = 0;
   }
 }
 
