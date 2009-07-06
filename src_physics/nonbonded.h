@@ -312,7 +312,7 @@ inline void calcInternalForces(ParticleDataMsg* first, CkSectionInfo *cookie1) {
   }
 #ifdef USE_SECTION_MULTICAST
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
-  //CkGetSectionInfo(cookie1, first);
+  //CkGetSectionInfo(*cookie1, first);
   //double might be incorrect here
   //double *forceArr = new double[3*firstmsg->lengthUpdates];
   //for (int i = 0; i < firstmsg->lengthUpdates; i++){

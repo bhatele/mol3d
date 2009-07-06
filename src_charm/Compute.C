@@ -113,10 +113,15 @@ void Compute::interact(ParticleDataMsg *msg){
 }
 
 void Compute::ResumeFromSync(){
-  if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) 
+  //CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+  if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
     patchArray(thisIndex.x1, thisIndex.y1, thisIndex.z1).resume();
+    //mCastGrp->rebuild(cookie1);
+  }
   else{
     patchArray(thisIndex.x1, thisIndex.y1, thisIndex.z1).resume();
     patchArray(thisIndex.x2, thisIndex.y2, thisIndex.z2).resume();
+    //mCastGrp->rebuild(cookie1);
+    //mCastGrp->rebuild(cookie2);
   }
 }

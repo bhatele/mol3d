@@ -286,20 +286,23 @@ void Patch::start() {
     msg->doAtSync = false;
     if (stepCount == 0 || ((stepCount % migrateStepCount == 1) && stepCount > 1)){
       msg->updateList = true;
-/*#ifdef USE_SECTION_MULTICAST
-      if (stepCount > 0 && migrateStepCount*1024 % (stepCount-1) == 0){
-	CkVec<CkArrayIndex6D> elems;
+#ifdef USE_SECTION_MULTICAST
+      if ((stepCount - firstLdbStep) % ldbPeriod == 1){
+	/*CkVec<CkArrayIndex6D> elems;
         for (int num=0; num<numNbrs; num++)
         elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
 
         CkArrayID computeArrayID = computeArray.ckGetArrayID();
         mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size());
 
-        CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
-        mCastSecProxy.ckSectionDelegate(mCastGrp);
+        */
+	CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+        //mCastSecProxy.ckSectionDelegate(mCastGrp);
+	mCastGrp->resetSection(mCastSecProxy);
 	mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+      
       }
-#endif*/
+#endif
     }
     else{
       msg->updateList = false;
@@ -441,7 +444,6 @@ void Patch::applyForces(){
     updateFlag = true;
 	      
     // checking whether to proceed with next step
-    //the commented out line causes load balancing instrumentation bug, and isnt necessary I think
     //thisProxy(x, y, z).checkNextStep();
     checkNextStep();
   }
