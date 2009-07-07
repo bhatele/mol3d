@@ -64,7 +64,7 @@ void Compute::interact(ParticleDataMsg *msg){
   if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
     bmsgLenAll = -1;
     if (msg->doAtSync){
-      LBTurnInstrumentOff();
+      //LBTurnInstrumentOff();
       AtSync();
     }
     if (msg->lbOn)
@@ -81,7 +81,6 @@ void Compute::interact(ParticleDataMsg *msg){
       cellCount = 0;
       bmsgLenAll = -1;
       if (msg->doAtSync){
-	LBTurnInstrumentOff();
 	AtSync();
       }
       if (msg->lbOn)
@@ -113,6 +112,7 @@ void Compute::interact(ParticleDataMsg *msg){
 }
 
 void Compute::ResumeFromSync(){
+  LBTurnInstrumentOff();
   //CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
     patchArray(thisIndex.x1, thisIndex.y1, thisIndex.z1).resume();

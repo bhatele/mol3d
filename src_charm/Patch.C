@@ -296,10 +296,10 @@ void Patch::start() {
         mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size());
 
         */
-	CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+//	CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
         //mCastSecProxy.ckSectionDelegate(mCastGrp);
-	mCastGrp->resetSection(mCastSecProxy);
-	mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+//	mCastGrp->resetSection(mCastSecProxy);
+//	mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
       
       }
 #endif
@@ -487,9 +487,9 @@ void Patch::checkNextStep(){
       particles.push_back(incomingParticles[i]);
     incomingParticles.removeAll();
 
-    if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0 && stepCount%100==0) {
+    if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0 && stepCount%20==0) {
       timer = CmiWallTimer();
-      CkPrintf("Step %d Benchmark Time %f ms/step, Total Time Elapsed %f ms\n", stepCount, ((timer - stepTime)/100)*1000, timer);
+      CkPrintf("Step %d Benchmark Time %f ms/step, Total Time Elapsed %f ms\n", stepCount, ((timer - stepTime)/20)*1000, timer);
       stepTime = timer;
 //      if (stepCount == 300)
 //	traceBegin();
