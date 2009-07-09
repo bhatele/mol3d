@@ -52,6 +52,7 @@ mainmodule mol3d {
   mainchare Main {
     entry Main(CkArgMsg* msg);
     entry void allDone();
+    entry void lbBarrier();
     entry void startUpDone();
   };
 
@@ -97,6 +98,7 @@ mainmodule mol3d {
     entry void receiveParticles(CkVec<Particle> updates);
     entry [local] void checkNextStep();
     // entry void requestNextFrame(liveVizRequestMsg *m);
+    entry void ResumeFromSync();
   };
 
   array [6D] Compute {

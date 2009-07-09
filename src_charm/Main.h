@@ -35,6 +35,7 @@ class Main : public CBase_Main {
     void readParameterFile(const StringList* sl_params, SimParameters* sParams);
     FileDataMsg* readParticleData();
     void allDone();
+    void lbBarrier();
     void startUpDone();
 };
 #endif

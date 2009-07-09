@@ -62,15 +62,22 @@ void Compute::interact(ParticleDataMsg *msg){
 
   // self interaction check
   if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
+    bool doatSync = false;
     bmsgLenAll = -1;
     if (msg->doAtSync){
+     // LBTurnInstrumentOff();
+      //AtSync();
+      doatSync = true;
       //LBTurnInstrumentOff();
-      AtSync();
     }
     if (msg->lbOn)
       LBTurnInstrumentOn();
     CkGetSectionInfo(cookie1,msg);
     calcInternalForces(msg, &cookie1);
+    if(doatSync)
+      AtSync();
+    //if (msg->lbOn)
+      //LBTurnInstrumentOn();
   } else {
     if (cellCount == 0) {
       bufferedMsg = msg;
@@ -79,9 +86,12 @@ void Compute::interact(ParticleDataMsg *msg){
     } else if (cellCount == 1) {
       // if both particle sets are received, compute interaction
       cellCount = 0;
+      bool doatSync = false;
       bmsgLenAll = -1;
       if (msg->doAtSync){
-	AtSync();
+	//LBTurnInstrumentOff();
+	//AtSync();
+	doatSync = true;
       }
       if (msg->lbOn)
 	LBTurnInstrumentOn();
@@ -106,15 +116,20 @@ void Compute::interact(ParticleDataMsg *msg){
 	else
 	  calcPairForces(msg, bufferedMsg);
       }
+      //if (msg->lbOn)
+	//LBTurnInstrumentOn();
       bufferedMsg = NULL;
+      if(doatSync)
+	AtSync();
     }
   }
 }
 
+
 void Compute::ResumeFromSync(){
   LBTurnInstrumentOff();
   //CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
-  if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
+  /*if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
     patchArray(thisIndex.x1, thisIndex.y1, thisIndex.z1).resume();
     //mCastGrp->rebuild(cookie1);
   }
@@ -123,5 +138,5 @@ void Compute::ResumeFromSync(){
     patchArray(thisIndex.x2, thisIndex.y2, thisIndex.z2).resume();
     //mCastGrp->rebuild(cookie1);
     //mCastGrp->rebuild(cookie2);
-  }
+  }*/
 }

@@ -117,6 +117,7 @@ class Patch : public CBase_Patch {
     void createSection();
     void receiveParticles(CkVec<Particle> &);
     void reduceForces(CkReductionMsg *msg);
+    void ResumeFromSync();           
     void resume();
     void receiveForces(ParticleForceMsg *updates);
     void checkNextStep();	// checks whether to continue with next step

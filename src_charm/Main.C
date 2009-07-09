@@ -210,6 +210,11 @@ Main::Main(CkArgMsg* msg) {
 // Constructor for chare object migration
 Main::Main(CkMigrateMessage* msg) { }
 
+void Main::lbBarrier(){
+  CkPrintf("got to lbBarrier at %f\n", CmiWallTimer());
+  patchArray.resume();
+}
+
 void Main::allDone() {
   CkPrintf("SIMULATION COMPLETE. \n\n");  CkExit();
 }
