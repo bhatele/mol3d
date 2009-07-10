@@ -317,7 +317,7 @@ void Patch::start() {
     }
   }
   msg->lbOn = false;
-  if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0) || stepCount == 1){
+  if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0) || stepCount == 0){
     if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
     msg->lbOn = true;
   }
@@ -410,7 +410,7 @@ void Patch::applyForces(){
   int i, x, y, z, x1, y1, z1;
   // if all forces are received, then it must recompute particles location
   if (forceCount == numNbrs) {
-    CkVec<Particle> outgoing[numNbrs];
+    CkVec<Particle> *outgoing = new CkVec<Particle>[numNbrs];
 
     // Received all it's forces from the interactions.
     forceCount = 0;
@@ -447,6 +447,7 @@ void Patch::applyForces(){
     updateFlag = true;
 	      
     // checking whether to proceed with next step
+    delete [] outgoing;
   //  thisProxy(x, y, z).checkNextStep();
     checkNextStep();
   }
