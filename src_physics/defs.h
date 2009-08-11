@@ -21,12 +21,9 @@ typedef double BigReal;
 #define COULOMBS_CONSTANT       (8.987551 * pow(10,-9))
 #define ELECTRON_CHARGE         (1.602176 * pow(10,-19))
 
-#define USE_PAIRLISTS		true  //generally faster if true
+#define USE_PAIRLISTS		true	// generally faster if true
 
-#define STRUCTURE_FILENAME	"iapp.js"
-#define PARAMS_FILENAME		"./par_all22_prot.inp"
-
-#define DEFAULT_DELTA		1 // in femtoseconds
+#define DEFAULT_DELTA		1	// in femtoseconds
 
 #define DEFAULT_FIRST_LDB	101
 #define DEFAULT_LDB_PERIOD	500
@@ -34,8 +31,8 @@ typedef double BigReal;
 #define PATCHARRAY_DIM_X	3
 #define PATCHARRAY_DIM_Y	3
 #define PATCHARRAY_DIM_Z	3
-#define PTP_CUT_OFF		13  //Rc in NAMD, cut off for atom to atom interactions
-#define PATCH_MARGIN		0  //constant difference between cut off and patch size
+#define PTP_CUT_OFF		13	// Rc in NAMD, cut off for atom to atom interactions
+#define PATCH_MARGIN		0 	// constant difference between cut off and patch size
 #define PATCH_SIZE_X		(PTP_CUT_OFF + PATCH_MARGIN)
 #define PATCH_SIZE_Y		(PTP_CUT_OFF + PATCH_MARGIN)
 #define PATCH_SIZE_Z		(PTP_CUT_OFF + PATCH_MARGIN)
@@ -48,9 +45,10 @@ typedef double BigReal;
 #define COMPARRAY_LEN_Z         3        
 
 #define PMEGRID_DIM_X           30
-#define PMEGRID_DIM_Y           30       //must be a multiple of CompArray and PatchArray dimensions
+#define PMEGRID_DIM_Y           30	// must be a multiple of CompArray and PatchArray dimensions
 #define PMEGRID_DIM_Z           30
-#define PME_CELL_SIZE           (PATCH_SIZE_X / (PMEGRID_DIM_X / PATCHARRAY_DIM_X)) //assumes cubic patch array  (careful with rounding)
+#define PME_CELL_SIZE           (PATCH_SIZE_X / (PMEGRID_DIM_X / PATCHARRAY_DIM_X))
+					// assumes cubic patch array  (careful with rounding)
 #define PME_CUT_OFF             PATCH_SIZE_X
 
 #define MIGRATE_STEPCOUNT	20

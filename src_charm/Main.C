@@ -107,8 +107,6 @@ Main::Main(CkArgMsg* msg) {
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
   ldbPeriod = DEFAULT_LDB_PERIOD;
-  structureFilename = STRUCTURE_FILENAME;
-  //paramsFileName = PARAMS_FILENAME;
   timeDelta = DEFAULT_DELTA;
   numNbrs = NUM_NEIGHBORS;
   nbrsX = NBRS_X;
