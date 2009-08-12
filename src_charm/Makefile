@@ -19,7 +19,7 @@ Patch.o: Patch.C Patch.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h
 mol3d.decl.h: mol3d.ci
 	$(CHARMC) mol3d.ci
 
-Compute.o: Compute.C Compute.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h
+Compute.o: Compute.C Compute.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h $(MAKE_MOL3D_PHYSICS)/nonbonded.h
 	$(CHARMC) $(OPTS) $(INC) -o Compute.o Compute.C
 
 clean:
