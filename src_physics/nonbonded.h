@@ -34,6 +34,8 @@ extern /* readonly */ BigReal stepTime;
 //extern /* readonly */ double A;			// Force Calculation parameter 1
 //extern /* readonly */ double B;			// Force Calculation parameter 2
 
+#define BLOCK_SIZE	128
+
 //calculate pair forces using pairlists
 inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* second, CkVec<int> *pairList, int *numLists, CkSectionInfo* cookie1, CkSectionInfo* cookie2) {
   int i, j, jpart, ptpCutOffSqd, diff;
@@ -93,16 +95,20 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
   }
 
   constants = COULOMBS_CONSTANT * ELECTRON_CHARGE * ELECTRON_CHARGE;
+
+  int i1, j1;
  
   memset(firstmsg->forces, 0, firstLen * 3*sizeof(BigReal));
   memset(secondmsg->forces, 0, secondLen * 3*sizeof(BigReal));
-  for(i = 0; i < firstLen; i++){
-    eField = first->charge[i];
-    firstx = first->coords[i].x;
-    firsty = first->coords[i].y;
-    firstz = first->coords[i].z;
-    for(j = 0; j < pairList[i].length(); j++) {
-      jpart = pairList[i][j];
+  for(i = 0; i < firstLen; i=i+BLOCK_SIZE)
+   for(i1 = i; i1 < i+BLOCK_SIZE && i1 < firstLen; i1++) {
+    eField = first->charge[i1];
+    firstx = first->coords[i1].x;
+    firsty = first->coords[i1].y;
+    firstz = first->coords[i1].z;
+    for(j = 0; j < pairList[i1].length(); j=j+BLOCK_SIZE)
+     for(j1 = j; j1 < j+BLOCK_SIZE && j1 < pairList[i1].length(); j1++) {
+      jpart = pairList[i1][j1];
       rx = firstx - second->coords[jpart].x;
       ry = firsty - second->coords[jpart].y;
       rz = firstz - second->coords[jpart].z;
@@ -112,7 +118,7 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
 	//r = sqrt(rsqd);
 	pars = rootTable->pars[(int)(rsqd/rootTable->delta)];
 	r = pars.a + rsqd*(pars.b+rsqd*(pars.c+ rsqd*pars.d));
-	vdwp = &(vdwTable->params[first->vdwIndex[i]*vdwTable->numParams + second->vdwIndex[jpart]]);
+	vdwp = &(vdwTable->params[first->vdwIndex[i1]*vdwTable->numParams + second->vdwIndex[jpart]]);
 	A = vdwp->A;
 	B = vdwp->B;
 	//r = r * 10000000000;
@@ -127,9 +133,9 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
 	secondmsg->forces[jpart].x += fx;
 	secondmsg->forces[jpart].y += fy;
 	secondmsg->forces[jpart].z += fz;
-	firstmsg->forces[i].x -= fx;
-	firstmsg->forces[i].y -= fy;
-	firstmsg->forces[i].z -= fz;
+	firstmsg->forces[i1].x -= fx;
+	firstmsg->forces[i1].y -= fy;
+	firstmsg->forces[i1].z -= fz;
       }
     }
   }
