@@ -283,10 +283,10 @@ void Patch::start() {
   msg->y = y;
   msg->z = z;
   msg->lengthAll = len;
+  msg->deleteList = false;
+  msg->doAtSync = false;
   // If using pairlists determine whether or not its time to update the pairlist
   if (usePairLists){
-    msg->deleteList = false;
-    msg->doAtSync = false;
     if (stepCount == 0 || ((stepCount % migrateStepCount == 1) && stepCount > 1)){
       msg->updateList = true;
 #ifdef USE_SECTION_MULTICAST
@@ -357,8 +357,8 @@ void Patch::start() {
       if (usePairLists){
 	newMsg->updateList = msg->updateList;
 	newMsg->deleteList = msg->deleteList;
-	newMsg->doAtSync = msg->doAtSync;
       }
+      newMsg->doAtSync = msg->doAtSync;
       newMsg->lbOn = msg->lbOn;
       memcpy(newMsg->coords, msg->coords, 3*len*sizeof(BigReal));
       memcpy(newMsg->charge, msg->charge, len*sizeof(BigReal));
@@ -447,9 +447,11 @@ void Patch::applyForces(){
     updateFlag = true;
 	      
     // checking whether to proceed with next step
+    thisProxy(x, y, z).checkNextStep();
+    //checkNextStep();
     delete [] outgoing;
   //  thisProxy(x, y, z).checkNextStep();
-    checkNextStep();
+    //checkNextStep();
   }
 
 }

@@ -136,22 +136,8 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
 #ifdef USE_SECTION_MULTICAST
   CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
   CkGetSectionInfo(*cookie1, first);
-  //double might be incorrect here
-  //double *forceArr = new double[3*firstmsg->lengthUpdates];
-  //for (int i = 0; i < firstmsg->lengthUpdates; i++){
-    //forceArr[3*i] = firstmsg->forces[i].x;
-    //forceArr[3*i+1] = firstmsg->forces[i].y;
-    //forceArr[3*i+2] = firstmsg->forces[i].z;
-  //}
   mCastGrp->contribute(sizeof(BigReal)*3*firstmsg->lengthUpdates, firstmsg->forces, CkReduction::sum_double, *cookie1);
   CkGetSectionInfo(*cookie2, second);
-  //double might be incorrect here
-  //double *forceArr2 = new double[3*secondmsg->lengthUpdates];
-  //for (int i = 0; i < secondmsg->lengthUpdates; i++){
-    //forceArr2[3*i] = secondmsg->forces[i].x;
-    //forceArr2[3*i+1] = secondmsg->forces[i].y;
-    //forceArr2[3*i+2] = secondmsg->forces[i].z;
-  //}
   mCastGrp->contribute(sizeof(BigReal)*3*secondmsg->lengthUpdates, secondmsg->forces, CkReduction::sum_double, *cookie2);
   delete firstmsg;
   delete secondmsg;
@@ -173,7 +159,7 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
 }
 
 //calculate pair forces without using pairlists
-inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second) {
+inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, CkSectionInfo* cookie1, CkSectionInfo* cookie2) {
   int i, j, jpart, ptpCutOffSqd, diff;
   int firstLen = first->lengthAll;
   int secondLen = second->lengthAll;
@@ -248,8 +234,18 @@ inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second) {
       }
     }
   }
+#ifdef USE_SECTION_MULTICAST
+  CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+  CkGetSectionInfo(*cookie1, first);
+  mCastGrp->contribute(sizeof(BigReal)*3*firstmsg->lengthUpdates, firstmsg->forces, CkReduction::sum_double, *cookie1);
+  CkGetSectionInfo(*cookie2, second);
+  mCastGrp->contribute(sizeof(BigReal)*3*secondmsg->lengthUpdates, secondmsg->forces, CkReduction::sum_double, *cookie2);
+  delete firstmsg;
+  delete secondmsg;
+#else
   patchArray(first->x, first->y, first->z).receiveForces(firstmsg);
   patchArray(second->x, second->y, second->z).receiveForces(secondmsg);
+#endif
   delete first;
   delete second;
 }

@@ -13,7 +13,7 @@ Main.o: Main.C Main.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h $(MAKE_MOL3D_PHY
 	$(MAKE_MOL3D_NAMDSRC)/Parameters.h $(MAKE_MOL3D_NAMDSRC)/SimParameters.h
 	$(CHARMC) $(OPTS) $(INC) -o Main.o Main.C
 
-Patch.o: Patch.C Patch.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h
+Patch.o: Patch.C Patch.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h mol3d.def.h
 	$(CHARMC) $(OPTS) $(INC) -o Patch.o Patch.C
 
 mol3d.decl.h: mol3d.ci
