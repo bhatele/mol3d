@@ -278,7 +278,7 @@ void Patch::start() {
   if (stepCount == 0 && x+y+z ==0)
     stepTime = CmiWallTimer();
   
-  ParticleDataMsg* msg = new (len, len, len) ParticleDataMsg;
+  ParticleDataMsg* msg = new (len) ParticleDataMsg;
   msg->x = x;
   msg->y = y;
   msg->z = z;
@@ -328,11 +328,11 @@ void Patch::start() {
       //CkPrintf("num particles on patch %d %d %d is %d\n",x,y,z,particles.size());
   }
   for (int i = 0; i < len; i++){
-    msg->coords[i].x = particles[i].x;
-    msg->coords[i].y = particles[i].y;
-    msg->coords[i].z = particles[i].z;
-    msg->charge[i] = particles[i].charge;
-    msg->vdwIndex[i] = particles[i].vdw_type;
+    msg->part[i].coord.x = particles[i].x;
+    msg->part[i].coord.y = particles[i].y;
+    msg->part[i].coord.z = particles[i].z;
+    msg->part[i].charge = particles[i].charge;
+    msg->part[i].vdwIndex = particles[i].vdw_type;
   }
 #ifdef USE_SECTION_MULTICAST
   mCastSecProxy.interact(msg);
@@ -349,7 +349,7 @@ void Patch::start() {
     if (num == numNbrs-1)
       computeArray(px1, py1, pz1, px2, py2, pz2).interact(msg);
     else {
-      ParticleDataMsg* newMsg = new (len, len, len) ParticleDataMsg;
+      ParticleDataMsg* newMsg = new (len) ParticleDataMsg;
       newMsg->x = x;
       newMsg->y = y;
       newMsg->z = z;
@@ -360,9 +360,9 @@ void Patch::start() {
       }
       newMsg->doAtSync = msg->doAtSync;
       newMsg->lbOn = msg->lbOn;
-      memcpy(newMsg->coords, msg->coords, 3*len*sizeof(BigReal));
-      memcpy(newMsg->charge, msg->charge, len*sizeof(BigReal));
-      memcpy(newMsg->vdwIndex, msg->vdwIndex, len*sizeof(int));
+      memcpy(newMsg->part, msg->part, len*sizeof(partData));
+      //memcpy(newMsg->charge, msg->charge, len*sizeof(BigReal));
+      //memcpy(newMsg->vdwIndex, msg->vdwIndex, len*sizeof(int));
       computeArray(px1, py1, pz1, px2, py2, pz2).interact(newMsg);
     } 
   }

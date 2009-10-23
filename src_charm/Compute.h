@@ -85,7 +85,7 @@ class Compute : public CBase_Compute {
       if (hasMsg){
 	//CkPrintf("HERE?\n");
 	if (p.isUnpacking())
-	  bufferedMsg = new (bmsgLenAll, bmsgLenAll, bmsgLenAll) ParticleDataMsg;
+	  bufferedMsg = new (bmsgLenAll) ParticleDataMsg;
 	p | *bufferedMsg;
       }
       else

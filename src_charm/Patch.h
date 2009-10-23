@@ -33,14 +33,27 @@ class loc{
     }
 };
 
+class partData{
+  public:
+    loc coord;
+    BigReal charge;
+    int vdwIndex;
+    
+    void pup(PUP::er &p){
+      p|coord; p|charge; p|vdwIndex;
+    }
+};
+
 class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
   public:
     //BigReal* particleLocX;
     //BigReal* particleLocY;
     //BigReal* particleLocZ;
-    loc* coords;
+    /*loc* coords;
     BigReal* charge;
     int *vdwIndex;
+    */
+    partData* part;
     int lengthAll;
     int x;
     int y;
@@ -60,13 +73,15 @@ class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
       p | doAtSync;
       p | lbOn;
       if (p.isUnpacking()){
-	coords = new loc[lengthAll];
+	/*coords = new loc[lengthAll];
 	charge = new BigReal[lengthAll];
-	vdwIndex = new int[lengthAll];
+	vdwIndex = new int[lengthAll];*/
+	part = new partData[lengthAll];
       }
-      PUParray(p, coords, lengthAll);
+      /*PUParray(p, coords, lengthAll);
       PUParray(p, charge, lengthAll);
-      PUParray(p, vdwIndex, lengthAll);
+      PUParray(p, vdwIndex, lengthAll);*/
+      PUParray(p, part, lengthAll);
     } 
 };
 

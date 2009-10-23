@@ -67,9 +67,7 @@ mainmodule mol3d {
 
 
   message ParticleDataMsg{
-    loc	coords[];
-    BigReal charge[];
-    int vdwIndex[];
+    partData part[];
   };
 
   message ParticleForceMsg{
