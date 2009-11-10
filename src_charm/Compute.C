@@ -1,8 +1,8 @@
 /*****************************************************************************
- * $Source$
- * $Author$
- * $Date$
- * $Revision$
+ * $Source: /cvsroot/charm/examples/charm++/Molecular3D/src_charm/Compute.C,v $
+ * $Author: insomnia52 $
+ * $Date: 2009-08-17 19:51:04 $
+ * $Revision: 1.11 $
  *****************************************************************************/
 
 /** \file Compute.h
@@ -61,7 +61,8 @@ void Compute::interact(ParticleDataMsg *msg){
   int i;
 
   // self interaction check
-  if (thisIndex.x1==thisIndex.x2 && thisIndex.y1==thisIndex.y2 && thisIndex.z1==thisIndex.z2) {
+  // FIX THIS: :self compute could be a wrap
+  if (thisIndex.x1 ==thisIndex.x2 && thisIndex.y1 ==thisIndex.y2 && thisIndex.z1 ==thisIndex.z2) {
     bool doatSync = false;
     bmsgLenAll = -1;
     if (msg->doAtSync){

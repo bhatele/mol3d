@@ -1,8 +1,8 @@
 /*****************************************************************************
- * $Source$
- * $Author$
- * $Date$
- * $Revision$
+ * $Source: /cvsroot/charm/examples/charm++/Molecular3D/src_charm/Patch.C,v $
+ * $Author: insomnia52 $
+ * $Date: 2009-10-23 19:04:20 $
+ * $Revision: 1.19 $
  *****************************************************************************/
 
 /** \file Patch.C
@@ -155,55 +155,76 @@ void Patch::createComputes() {
     dy = (num % (nbrsY * nbrsZ)) / nbrsZ - nbrsY/2;
     dz = num % nbrsZ                       - nbrsZ/2;
 
-    
-    if (dx == 0) {
-      px1 = px2 = x;
+    if (num >= numNbrs/2){
+      px1 = x + 2;
+      px2 = x+dx+2;
+      py1 = y + 2;
+      py2 = y+dy+2;
+      pz1 = z + 2;
+      pz2 = z+dz+2;
+      computeArray(px1, py1, pz1, px2, py2, pz2).insert((++currPe)%numPes);
+      computesList[num][0] = px1; computesList[num][1] = py1; computesList[num][2] = pz1; 
+      computesList[num][3] = px2; computesList[num][4] = py2; computesList[num][5] = pz2;
+    }
+    else {
+  /*    if (dx == 0) {
+	px1 = px2 = x;
 
-      if (dy == 0) { 
-	py1 = py2 = y;
-	if (dz == 0) { pz1 = pz2 = z; }
-	if (dz > 0) { 
-	  pz1 = z;
-	  pz2 = WRAP_Z(z+dz);
+	if (dy == 0) { 
+	  py1 = py2 = y;
+	  if (dz == 0) { pz1 = pz2 = z; }
+	  if (dz > 0) { 
+	    pz1 = z;
+	    pz2 = WRAP_Z(z+dz);
+	  }
+	  if (dz < 0){
+	    pz2 = z;
+	    pz1 = WRAP_Z(z+dz);
+	  }
 	}
-	if (dz < 0){
-	  pz2 = z;
+
+	if (dy > 0) { 
+	  py2 = WRAP_Y(y+dy);
+	  pz2 = WRAP_Z(z+dz);
+	  py1 = y;
+	  pz1 = z; 
+	}
+	
+	if (dy < 0) { 
+	  py1 = WRAP_Y(y+dy);
 	  pz1 = WRAP_Z(z+dz);
+	  py2 = y;
+	  pz2 = z; 
 	}
       }
 
-      if (dy > 0) { 
+      if (dx > 0){
+*/	px2 = WRAP_X(x+dx);
 	py2 = WRAP_Y(y+dy);
 	pz2 = WRAP_Z(z+dz);
+	px1 = x;
 	py1 = y;
 	pz1 = z; 
-      }
-      
-      if (dy < 0) { 
+/*      }
+
+      if (dx < 0){
+	px1 = WRAP_X(x+dx);
 	py1 = WRAP_Y(y+dy);
 	pz1 = WRAP_Z(z+dz);
+	px2 = x;
 	py2 = y;
 	pz2 = z; 
       }
+  */    px1 = px2 - dx + 2;
+      px2 = px2+2;
+      py1 = py2 - dy + 2;
+      py2 = py2+2;
+      pz1 = pz2 - dz + 2;
+      pz2 = pz2+2;
+    computesList[num][0] = px2; computesList[num][1] = py2; computesList[num][2] = pz2; 
+    computesList[num][3] = px1; computesList[num][4] = py1; computesList[num][5] = pz1;
     }
 
-    if (dx > 0){
-      px2 = WRAP_X(x+dx);
-      py2 = WRAP_Y(y+dy);
-      pz2 = WRAP_Z(z+dz);
-      px1 = x;
-      py1 = y;
-      pz1 = z; 
-    }
-
-    if (dx < 0){
-      px1 = WRAP_X(x+dx);
-      py1 = WRAP_Y(y+dy);
-      pz1 = WRAP_Z(z+dz);
-      px2 = x;
-      py2 = y;
-      pz2 = z; 
-    }
     /*if (dx == 0) {
       px1 = px2 = x;
 
@@ -239,12 +260,8 @@ void Patch::createComputes() {
       ( px1 = WRAP_X(x+dx), py1 = WRAP_Y(y+dy), pz1 = WRAP_Z(z+dz), px2 = x, py2 = y, pz2 = z ) ;
     }*/
 
-    computesList[num][0] = px1; computesList[num][1] = py1; computesList[num][2] = pz1; 
-    computesList[num][3] = px2; computesList[num][4] = py2; computesList[num][5] = pz2;
 
     //insert only the upper right half computes
-    if (num >= numNbrs/2)
-      computeArray(px1, py1, pz1, px2, py2, pz2).insert((++currPe)%numPes);
   } // end of for loop
 
   contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));

@@ -1,8 +1,8 @@
 /*****************************************************************************
- * $Source$
- * $Author$
- * $Date$
- * $Revision$
+ * $Source: /cvsroot/charm/examples/charm++/Molecular3D/src_charm/Main.C,v $
+ * $Author: bhatele $
+ * $Date: 2009-08-11 23:15:28 $
+ * $Revision: 1.14 $
  *****************************************************************************/
 
 /** \file Main.C
@@ -179,7 +179,7 @@ Main::Main(CkArgMsg* msg) {
 	patchArray(x, y, z).insert(fdmsgcopy, pe);
       }
   patchArray.doneInserting();
-  CkPrintf("%d PATCHES CREATED\n", patchArrayDimX * patchArrayDimY * patchArrayDimZ);
+  CkPrintf("%d by %d by %d PATCHES CREATED\n", patchArrayDimX, patchArrayDimY, patchArrayDimZ);
 
 #ifdef USE_SECTION_MULTICAST
   // initializing the CkMulticastMgr
@@ -287,25 +287,25 @@ void Main::readConfigFile(const char* filename){
     patchMargin = atoi(sl_margin->data);
 
   if (twoAwayX) { 
-    patchSizeX = (patchMargin + ptpCutOff)/2;
+    patchSizeX = (2*patchMargin + ptpCutOff)/2;
     nbrsX = 5;
   }
   else
-    patchSizeX = patchMargin + ptpCutOff;
+    patchSizeX = 2*patchMargin + ptpCutOff;
   
   if (twoAwayY) { 
-    patchSizeY = (patchMargin + ptpCutOff)/2;
+    patchSizeY = (2*patchMargin + ptpCutOff)/2;
     nbrsY = 5;
   }
   else
-    patchSizeY = patchMargin + ptpCutOff;
+    patchSizeY = 2*patchMargin + ptpCutOff;
   
   if (twoAwayZ) { 
-    patchSizeZ = (patchMargin + ptpCutOff)/2;
+    patchSizeZ = (2*patchMargin + ptpCutOff)/2;
     nbrsZ = 5;
   }
   else
-    patchSizeZ = patchMargin + ptpCutOff;
+    patchSizeZ = 2*patchMargin + ptpCutOff;
 
   numNbrs = nbrsX * nbrsY * nbrsZ;
 
@@ -420,9 +420,12 @@ FileDataMsg* Main::readParticleData() {
     atomcoords += 3;
   }
   // determine appropriate patch dimensions
-  patchArrayDimX = ceil((maxX - minX) / patchSizeX);
-  patchArrayDimY = ceil((maxY - minY) / patchSizeY);
-  patchArrayDimZ = ceil((maxZ - minZ) / patchSizeZ);
+  patchArrayDimX = floor((maxX - minX) / patchSizeX);
+  patchSizeX = ceil((maxX - minX) / patchArrayDimX);
+  patchArrayDimY = floor((maxY - minY) / patchSizeY);
+  patchSizeY = ceil((maxY - minY) / patchArrayDimY);
+  patchArrayDimZ = floor((maxZ - minZ) / patchSizeZ);
+  patchSizeZ = ceil((maxZ - minZ) / patchArrayDimZ);
   patchOriginX = (int)minX;
   patchOriginY = (int)minY;
   patchOriginZ = (int)minZ;
