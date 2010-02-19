@@ -60,6 +60,7 @@ extern /* readonly */ int migrateStepCount;
 extern /* readonly */ int finalStepCount; 
 extern /* readonly */ int firstLdbStep; 
 extern /* readonly */ int ldbPeriod; 
+extern /* readonly */ int ftPeriod; 
 extern /* readonly */ BigReal stepTime; 
 extern /* readonly */ BigReal timeDelta;
 extern /* readonly */ bool usePairLists;
@@ -542,6 +543,10 @@ void Patch::checkNextStep(){
 	  contribute(CkCallback(CkIndex_Main::lbBarrier(),mainProxy));
 	  return;
 	}
+        if (stepCount % ftPeriod == 0) {
+	  contribute(CkCallback(CkIndex_Main::ftBarrier(),mainProxy));
+	  return;
+        }
 	thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
       }
       else{

@@ -62,6 +62,7 @@
 /* readonly */ int finalStepCount; 
 /* readonly */ int firstLdbStep; 
 /* readonly */ int ldbPeriod; 
+/* readonly */ int ftPeriod; 
 /* readonly */ BigReal stepTime; 
 /* readonly */ BigReal timeDelta;
 /* readonly */ bool usePairLists;
@@ -107,6 +108,7 @@ Main::Main(CkArgMsg* msg) {
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
   ldbPeriod = DEFAULT_LDB_PERIOD;
+  ftPeriod = DEFAULT_FT_PERIOD;
   timeDelta = DEFAULT_DELTA;
   numNbrs = NUM_NEIGHBORS;
   nbrsX = NBRS_X;
@@ -211,6 +213,12 @@ Main::Main(CkMigrateMessage* msg) { }
 void Main::lbBarrier(){
   CkPrintf("got to lbBarrier at %f\n", CmiWallTimer());
   patchArray.resume();
+}
+
+void Main::ftBarrier(){
+  CkPrintf("got to ftBarrier at %f\n", CmiWallTimer());
+  CkCallback cb(CkIndex_Patch::resume(), patchArray);
+  CkStartMemCheckpoint(cb);
 }
 
 void Main::allDone() {
@@ -320,6 +328,10 @@ void Main::readConfigFile(const char* filename){
   const StringList* sl_ldbPeriod = cfg->find("ldbPeriod");
   if (sl_ldbPeriod != NULL)
     ldbPeriod = atof(sl_ldbPeriod->data);
+
+  const StringList* sl_ftPeriod = cfg->find("ftPeriod");
+  if (sl_ftPeriod != NULL)
+    ftPeriod = atof(sl_ftPeriod->data);
 
   sl_parameters = cfg->find("parameters");
 

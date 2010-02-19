@@ -27,6 +27,7 @@ typedef double BigReal;
 
 #define DEFAULT_FIRST_LDB	101
 #define DEFAULT_LDB_PERIOD	500
+#define DEFAULT_FT_PERIOD	10
 
 #define PATCHARRAY_DIM_X	3
 #define PATCHARRAY_DIM_Y	3

@@ -35,6 +35,7 @@ mainmodule mol3d {
   readonly int finalStepCount;	// number of steps at which the cells should stop computation
   readonly int firstLdbStep;	// do load balancing after this many steps
   readonly int ldbPeriod;	// do load balancing every period
+  readonly int ftPeriod;	// do load balancing every period
   readonly BigReal stepTime;
   readonly BigReal timeDelta;	// real time per step
   readonly double A;		// LJ parameter
@@ -53,6 +54,7 @@ mainmodule mol3d {
     entry Main(CkArgMsg* msg);
     entry void allDone();
     entry void lbBarrier();
+    entry void ftBarrier();
     entry void startUpDone();
   };
 

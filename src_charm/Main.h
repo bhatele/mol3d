@@ -36,6 +36,7 @@ class Main : public CBase_Main {
     FileDataMsg* readParticleData();
     void allDone();
     void lbBarrier();
+    void ftBarrier();
     void startUpDone();
 };
 #endif
