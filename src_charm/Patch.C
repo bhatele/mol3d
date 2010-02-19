@@ -76,6 +76,7 @@ extern /* readonly */ double B;
 Patch::Patch(FileDataMsg* fdmsg) {
   LBTurnInstrumentOff();
   int i;
+  inbrs = numNbrs;
   usesAtSync = CmiTrue;
   //double d1 = CmiWallTimer();
   // Particle initialization
@@ -112,7 +113,7 @@ Patch::Patch(FileDataMsg* fdmsg) {
   incomingFlag = false;
   pause = false;
   incomingParticles.resize(0);
-  setMigratable(CmiFalse);
+ // setMigratable(CmiFalse);
   delete fdmsg;
   //loadTime = CmiWallTimer() - d1;
 }
@@ -269,6 +270,11 @@ void Patch::createComputes() {
 }
 
 void Patch::createSection() {
+  localCreateSection();
+  contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
+}
+
+void Patch::localCreateSection() {
 #ifdef USE_SECTION_MULTICAST
   CkVec<CkArrayIndex6D> elems;
   for (int num=0; num<numNbrs; num++)
@@ -281,7 +287,6 @@ void Patch::createSection() {
   mCastSecProxy.ckSectionDelegate(mCastGrp);
   mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
 
-  contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
 #endif
 }
 
@@ -470,6 +475,7 @@ void Patch::applyForces(){
   //  thisProxy(x, y, z).checkNextStep();
     //checkNextStep();
   }
+//  else { CkPrintf("forcecount = %d/%d on patch %d %d %d\n", forceCount, numNbrs, thisIndex.x, thisIndex.y, thisIndex.z); }
 
 }
 
@@ -539,7 +545,7 @@ void Patch::checkNextStep(){
 	thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
       }
       else{
-	//AtSync();
+	AtSync();
 //	loadTime += CmiWallTimer()-d1;
 	//CkPrintf("Patch %d on processor %d had load %f\n", thisIndex.x*patchArrayDimY*patchArrayDimZ + thisIndex.y*patchArrayDimZ + thisIndex.z, CkMyPe(), loadTime);
 //	loadTime = 0;

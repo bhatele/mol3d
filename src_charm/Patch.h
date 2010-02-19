@@ -112,6 +112,7 @@ class Patch : public CBase_Patch {
     int **computesList;
     int resumeCount;
     double loadTime;
+    int inbrs;
     
  
     void migrateToPatch(Particle p, int &px, int &py, int &pz);
@@ -130,6 +131,7 @@ class Patch : public CBase_Patch {
     void start();
     void createComputes();
     void createSection();
+    void localCreateSection();
     void receiveParticles(CkVec<Particle> &);
     void reduceForces(CkReductionMsg *msg);
     void ResumeFromSync();           
@@ -139,6 +141,43 @@ class Patch : public CBase_Patch {
 #ifdef RUN_LIVEVIZ
     void requestNextFrame(liveVizRequestMsg *m);
 #endif
+    
+    void pup(PUP::er &p){
+      CBase_Patch::pup(p); 
+      p | particles;
+      p | incomingParticles;
+
+      p | forceCount;		
+      p | stepCount;		
+      p | updateCount;
+      p | myNumParts;
+      p | updateFlag;
+      p | incomingFlag;
+      p | pause;
+      p | resumeCount;
+      p | loadTime;
+      p | inbrs;
+
+      if (p.isUnpacking()){
+	computesList = new int*[inbrs];
+	for (int i = 0; i < inbrs; i++){
+	  computesList[i] = new int[6];
+	}
+      }
+
+      for (int i = 0; i < inbrs; i++){
+        PUParray(p, computesList[i], 6);
+      }
+     
+#ifdef USE_SECTION_MULTICAST 
+      if (p.isUnpacking()){
+        //need to recreate ckmulticast section proxy
+	localCreateSection();
+      }
+#endif
+ 
+    } 
+
 };
 
 #endif
