@@ -208,7 +208,7 @@ Main::Main(CkArgMsg* msg) {
 }
 
 // Constructor for chare object migration
-Main::Main(CkMigrateMessage* msg) { }
+Main::Main(CkMigrateMessage* msg): CBase_Main(msg) { }
 
 void Main::lbBarrier(){
   CkPrintf("got to lbBarrier at %f\n", CmiWallTimer());

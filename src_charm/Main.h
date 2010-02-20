@@ -15,6 +15,7 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+PUPbytes(SimParameters)
 
 /** \class Main
  *
@@ -30,6 +31,12 @@ class Main : public CBase_Main {
   public:
     Main(CkArgMsg* msg);
     Main(CkMigrateMessage* msg);
+    void pup(PUP::er &p) {
+      Chare::pup(p);
+      p|phase;
+      if (p.isUnpacking())  simParams = new SimParameters;
+      p|*simParams;
+    }
 
     void readConfigFile(const char* filename);
     void readParameterFile(const StringList* sl_params, SimParameters* sParams);

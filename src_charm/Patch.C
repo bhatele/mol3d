@@ -120,7 +120,7 @@ Patch::Patch(FileDataMsg* fdmsg) {
 }
 
 // Constructor for chare object migration
-Patch::Patch(CkMigrateMessage *msg) { }  
+Patch::Patch(CkMigrateMessage *msg): CBase_Patch(msg) { }  
                                        
 Patch::~Patch() {}
 

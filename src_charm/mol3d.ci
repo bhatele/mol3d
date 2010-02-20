@@ -50,7 +50,7 @@ mainmodule mol3d {
   readonly int nbrsZ;	
   
 
-  mainchare Main {
+  mainchare [migratable] Main {
     entry Main(CkArgMsg* msg);
     entry void allDone();
     entry void lbBarrier();
