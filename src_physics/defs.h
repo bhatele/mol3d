@@ -52,7 +52,7 @@ typedef double BigReal;
 					// assumes cubic patch array  (careful with rounding)
 #define PME_CUT_OFF             PATCH_SIZE_X
 
-#define MIGRATE_STEPCOUNT	20
+#define MIGRATE_STEPCOUNT	5
 #define DEFAULT_FINALSTEPCOUNT	101
 #define MAX_VELOCITY		30.0
 

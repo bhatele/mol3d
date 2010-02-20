@@ -307,6 +307,7 @@ void Patch::start() {
   msg->z = z;
   msg->lengthAll = len;
   msg->deleteList = false;
+  msg->updateList = false;
   msg->doAtSync = false;
   // If using pairlists determine whether or not its time to update the pairlist
   if (usePairLists){
@@ -333,6 +334,7 @@ void Patch::start() {
     else{
       msg->updateList = false;
       if (stepCount % migrateStepCount == 0){
+
 	msg->deleteList = true;
 	//if (migrateStepCount*1024 % stepCount == 0)
 	  //msg->doAtSync = true;
@@ -340,15 +342,13 @@ void Patch::start() {
     }
   }
   msg->lbOn = false;
-  if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0) || stepCount == 0){
+  if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 1) || stepCount == 0){
     if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
     msg->lbOn = true;
   }
   if ((stepCount - firstLdbStep) % ldbPeriod == 0){
     msg->doAtSync = true;
     pause = true;
-    //if (x+y+z < 3)
-      //CkPrintf("num particles on patch %d %d %d is %d\n",x,y,z,particles.size());
   }
   for (int i = 0; i < len; i++){
     msg->part[i].coord.x = particles[i].x;
@@ -357,6 +357,8 @@ void Patch::start() {
     msg->part[i].charge = particles[i].charge;
     msg->part[i].vdwIndex = particles[i].vdw_type;
   }
+  //if (x+y+z < 1)
+    //  CkPrintf("patch %d %d %d, updatelist = %d deletelist = %d\n",x,y,z,msg->updateList, msg->deleteList);
 #ifdef USE_SECTION_MULTICAST
   mCastSecProxy.interact(msg);
 #else
@@ -543,7 +545,7 @@ void Patch::checkNextStep(){
 	  contribute(CkCallback(CkIndex_Main::lbBarrier(),mainProxy));
 	  return;
 	}
-        if (stepCount % ftPeriod == 0) {
+        if (stepCount % ftPeriod == 1 && stepCount > 1) {
 	  contribute(CkCallback(CkIndex_Main::ftBarrier(),mainProxy));
 	  return;
         }
@@ -590,6 +592,10 @@ void Patch::resume(){
       CkPrintf("patch 0 calling AtSync at %f\n",CmiWallTimer());
     AtSync();
   }
+}
+
+void Patch::ftresume(){
+  start();
 }
 
 // Function that receives a set of particles and updates the 
