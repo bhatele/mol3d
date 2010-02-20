@@ -95,6 +95,7 @@ mainmodule mol3d {
     entry void receiveForces(ParticleForceMsg *updates);
     entry void reduceForces(CkReductionMsg *msg);
     entry void resume();
+    entry void ftresume();
     entry void receiveParticles(CkVec<Particle> updates);
     entry [local] void checkNextStep();
     // entry void requestNextFrame(liveVizRequestMsg *m);

@@ -136,6 +136,7 @@ class Patch : public CBase_Patch {
     void reduceForces(CkReductionMsg *msg);
     void ResumeFromSync();           
     void resume();
+    void ftresume();
     void receiveForces(ParticleForceMsg *updates);
     void checkNextStep();	// checks whether to continue with next step
 #ifdef RUN_LIVEVIZ

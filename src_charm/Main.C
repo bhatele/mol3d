@@ -217,7 +217,7 @@ void Main::lbBarrier(){
 
 void Main::ftBarrier(){
   CkPrintf("got to ftBarrier at %f\n", CmiWallTimer());
-  CkCallback cb(CkIndex_Patch::resume(), patchArray);
+  CkCallback cb(CkIndex_Patch::ftresume(), patchArray);
   CkStartMemCheckpoint(cb);
 }
 
