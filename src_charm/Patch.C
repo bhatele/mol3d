@@ -120,7 +120,10 @@ Patch::Patch(FileDataMsg* fdmsg) {
 }
 
 // Constructor for chare object migration
-Patch::Patch(CkMigrateMessage *msg): CBase_Patch(msg) { }  
+Patch::Patch(CkMigrateMessage *msg): CBase_Patch(msg) { 
+  usesAtSync = CmiTrue;
+  delete msg;
+}  
                                        
 Patch::~Patch() {}
 
@@ -300,7 +303,7 @@ void Patch::start() {
   
   if (stepCount == 0 && x+y+z ==0)
     stepTime = CmiWallTimer();
-  
+
   ParticleDataMsg* msg = new (len) ParticleDataMsg;
   msg->x = x;
   msg->y = y;
@@ -595,6 +598,8 @@ void Patch::resume(){
 }
 
 void Patch::ftresume(){
+  if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z ==0)
+      CkPrintf("patch 0 calling ftresume at %f\n",CmiWallTimer());
   start();
 }
 

@@ -54,7 +54,10 @@ Compute::Compute() {
   usesAtSync = CmiTrue;
 }
 
-Compute::Compute(CkMigrateMessage *msg): CBase_Compute(msg)  { }
+Compute::Compute(CkMigrateMessage *msg): CBase_Compute(msg)  { 
+  usesAtSync = CmiTrue;
+  delete msg;
+}
   
 // Entry method to receive vector of particles
 void Compute::interact(ParticleDataMsg *msg){
