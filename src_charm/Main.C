@@ -74,8 +74,8 @@
 /* readonly */ int nbrsY;
 /* readonly */ int nbrsZ;
 
-/* readonly */ double A = 1.60694452*pow(10, -134);			// Force Calculation parameter 1
-/* readonly */ double B = 1.031093844*pow(10, -77);			// Force Calculation parameter 2
+/* readonly */ double A = 1.60694452*pow(10.0, -134);			// Force Calculation parameter 1
+/* readonly */ double B = 1.031093844*pow(10.0, -77);			// Force Calculation parameter 2
 
 // Entry point of Charm++ application
 Main::Main(CkArgMsg* msg) {
@@ -133,7 +133,7 @@ Main::Main(CkArgMsg* msg) {
   int currPe = -1, pe;
 
   //get square root interpolation table
-  rootTable = fillTable(10000, ((BigReal)ptpCutOff*ptpCutOff)*pow(10,-18)/10000);
+  rootTable = fillTable(10000, ((BigReal)ptpCutOff*ptpCutOff)*pow(10.0,-18)/10000);
 
   //read config file
   if (msg->argc > 1) {

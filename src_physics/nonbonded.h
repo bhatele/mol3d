@@ -73,7 +73,7 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
       first->part[i].coord.z += diff;
   } 
   ptpCutOffSqd = ptpCutOff * ptpCutOff;
-  powTwenty = pow(10, -20);
+  powTwenty = pow(10.0, -20);
 
   //check if pairlist needs to be updated
   if (first->updateList){
@@ -202,7 +202,7 @@ inline void calcPairForces(ParticleDataMsg* first, ParticleDataMsg* second, CkSe
       first->part[i].coord.z += diff;
   } 
   ptpCutOffSqd = ptpCutOff * ptpCutOff;
-  powTwenty = pow(10, -20);
+  powTwenty = pow(10.0, -20);
   constants = COULOMBS_CONSTANT * ELECTRON_CHARGE * ELECTRON_CHARGE;
  
   memset(firstmsg->forces, 0, firstLen * 3*sizeof(BigReal));
@@ -276,7 +276,7 @@ inline void calcInternalForces(ParticleDataMsg* first, CkSectionInfo *cookie1) {
   
   memset(firstmsg->forces, 0, firstLen * 3*sizeof(BigReal));
   ptpCutOffSqd = ptpCutOff * ptpCutOff;
-  powTwenty = pow(10, -20);
+  powTwenty = pow(10.0, -20);
   for(i = 0; i < firstLen; i++){
     eField = first->part[i].charge;
     firstx = first->part[i].coord.x;

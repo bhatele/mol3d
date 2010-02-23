@@ -620,8 +620,8 @@ void Patch::receiveParticles(CkVec<Particle> &updates) {
 void Patch::updateProperties() {
   int i;
   BigReal powTen, powFteen, realTimeDelta, invMassParticle;
-  powTen = pow(10, -10);
-  powFteen = pow(10, -15);
+  powTen = pow(10.0, -10);
+  powFteen = pow(10.0, -15);
   realTimeDelta = timeDelta * powFteen;
   for(i = 0; i < particles.length(); i++) {
     // applying kinetic equations

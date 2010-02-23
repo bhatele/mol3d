@@ -17,9 +17,9 @@
 
 typedef double BigReal;
 
-#define AVAGADROS_NUMBER        (6.022141 * pow(10,23))
-#define COULOMBS_CONSTANT       (8.987551 * pow(10,-9))
-#define ELECTRON_CHARGE         (1.602176 * pow(10,-19))
+#define AVAGADROS_NUMBER        (6.022141 * pow(10.0,23))
+#define COULOMBS_CONSTANT       (8.987551 * pow(10.0,-9))
+#define ELECTRON_CHARGE         (1.602176 * pow(10.0,-19))
 
 #define USE_PAIRLISTS		true	// generally faster if true
 
