@@ -155,8 +155,8 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
     for (i = 0; i < firstLen; i++){
       pairList[i].removeAll();
     }
- //   delete [] pairList;
- //   *numLists = -1;
+    delete [] pairList;
+    *numLists = -1;
     pairList = NULL;
   }
   delete first;
