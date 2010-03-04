@@ -77,6 +77,11 @@ class Compute : public CBase_Compute {
       CBase_Compute::pup(p);
       p | cookie1;
       p | cookie2;
+      if (p.isUnpacking()) {
+        cookie1.get_redNo() = 0;
+        if (!(thisIndex.x1 ==thisIndex.x2 && thisIndex.y1 ==thisIndex.y2 && thisIndex.z1 ==thisIndex.z2))
+        cookie2.get_redNo() = 0;
+      }
       p | cellCount;
       p | numLists;
       p | bmsgLenAll;
