@@ -77,11 +77,13 @@ class Compute : public CBase_Compute {
       CBase_Compute::pup(p);
       p | cookie1;
       p | cookie2;
+#ifdef USE_SECTION_MULTICAST
       if (p.isUnpacking() && CkInRestarting()) {
         cookie1.get_redNo() = 0;
         if (!(thisIndex.x1 ==thisIndex.x2 && thisIndex.y1 ==thisIndex.y2 && thisIndex.z1 ==thisIndex.z2))
         cookie2.get_redNo() = 0;
       }
+#endif
       p | cellCount;
       p | numLists;
       p | bmsgLenAll;
