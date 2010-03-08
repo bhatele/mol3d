@@ -132,8 +132,6 @@ Main::Main(CkArgMsg* msg) {
   int numPes = CkNumPes();
   int currPe = -1, pe;
 
-  //get square root interpolation table
-  rootTable = fillTable(10000, ((BigReal)ptpCutOff*ptpCutOff)*pow(10.0,-18)/10000);
 
   //read config file
   if (msg->argc > 1) {
@@ -143,6 +141,8 @@ Main::Main(CkArgMsg* msg) {
   }
   if (msg->argc > 2) bFactor = atoi(msg->argv[2]);
 
+  //get square root interpolation table
+  rootTable = fillTable(10000, ((BigReal)ptpCutOff*ptpCutOff)*pow(10.0,-20)/10000);
 
   //reading data
   FileDataMsg *fdmsg = readParticleData();

@@ -96,7 +96,7 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
 
   constants = COULOMBS_CONSTANT * ELECTRON_CHARGE * ELECTRON_CHARGE;
 
-  int i1, j1;
+  int i1, j1, rootidx;
  
   memset(firstmsg->forces, 0, firstLen * 3*sizeof(BigReal));
   memset(secondmsg->forces, 0, secondLen * 3*sizeof(BigReal));
@@ -115,9 +115,12 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
       rsqd = rx*rx + ry*ry + rz*rz;
       if (rsqd >= 0.001){
 	rsqd = rsqd * powTwenty;
-	//r = sqrt(rsqd);
-	pars = rootTable->pars[(int)(rsqd/rootTable->delta)];
-	r = pars.a + rsqd*(pars.b+rsqd*(pars.c+ rsqd*pars.d));
+	rootidx = (int)(rsqd/rootTable->delta);
+	if (rootidx >= 10000) r = sqrt(rsqd);
+	else {
+	  pars = rootTable->pars[(int)(rsqd/rootTable->delta)];
+	  r = pars.a + rsqd*(pars.b+rsqd*(pars.c+ rsqd*pars.d));
+	}
 	vdwp = &(vdwTable->params[first->part[i1].vdwIndex*vdwTable->numParams + second->part[jpart].vdwIndex]);
 	A = vdwp->A;
 	B = vdwp->B;
