@@ -1,15 +1,3 @@
-/*****************************************************************************
- * $Source: /cvsroot/charm/examples/charm++/Molecular3D/src_charm/Compute.C,v $
- * $Author: insomnia52 $
- * $Date: 2009-08-17 19:51:04 $
- * $Revision: 1.11 $
- *****************************************************************************/
-
-/** \file Compute.h
- *  Author: Abhinav S Bhatele
- *  Date Created: August 11th, 2008
- */
-
 #include "defs.h"
 #ifdef RUN_LIVEVIZ
   #include "liveViz.h"

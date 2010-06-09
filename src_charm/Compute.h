@@ -1,15 +1,3 @@
-/*****************************************************************************
- * $Source$
- * $Author$
- * $Date$
- * $Revision$
- *****************************************************************************/
-
-/** \file Compute.h
- *  Author: Abhinav S Bhatele
- *  Date Created: August 11th, 2008
- */
-
 #ifndef __COMPUTE_H__
 #define __COMPUTE_H__
 

@@ -1,15 +1,3 @@
-/*****************************************************************************
- * $Source: /cvsroot/charm/examples/charm++/Molecular3D/src_charm/Patch.C,v $
- * $Author: insomnia52 $
- * $Date: 2009-10-23 19:04:20 $
- * $Revision: 1.19 $
- *****************************************************************************/
-
-/** \file Patch.C
- *  Author: Abhinav S Bhatele
- *  Date Created: August 11th, 2008
- */
-
 #include "time.h"
 #include "defs.h"
 #ifdef RUN_LIVEVIZ

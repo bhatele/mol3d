@@ -1,16 +1,3 @@
-/*****************************************************************************
- * $Source$
- * $Author$
- * $Date$
- * $Revision$
- *****************************************************************************/
-
-/** \file Patch.h
- *  Author: Abhinav S Bhatele
- *  Date Created: August 11th, 2008
- */
-
-
 #ifndef __PATCH_H__
 #define __PATCH_H__
 
