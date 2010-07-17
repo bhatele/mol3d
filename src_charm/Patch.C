@@ -306,14 +306,14 @@ void Patch::start() {
       msg->updateList = true;
 #ifdef USE_SECTION_MULTICAST
       if ((stepCount - firstLdbStep) % ldbPeriod == 1){
-	/*CkVec<CkArrayIndex6D> elems;
+	CkVec<CkArrayIndex6D> elems;
         for (int num=0; num<numNbrs; num++)
         elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
 
         CkArrayID computeArrayID = computeArray.ckGetArrayID();
         mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size());
 
-        */
+        
 //	CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
         //mCastSecProxy.ckSectionDelegate(mCastGrp);
 //	mCastGrp->resetSection(mCastSecProxy);
@@ -330,6 +330,13 @@ void Patch::start() {
 	//if (migrateStepCount*1024 % stepCount == 0)
 	  //msg->doAtSync = true;
       }
+      if ((stepCount - firstLdbStep) % ldbPeriod == 0){
+        msg->deleteList = true;
+      }
+      if ((stepCount - firstLdbStep) % ldbPeriod == 0){
+        msg->updateList = true;
+      }
+
     }
   }
   msg->lbOn = false;
