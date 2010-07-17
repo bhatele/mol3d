@@ -160,99 +160,21 @@ void Patch::createComputes() {
       computesList[num][3] = px2; computesList[num][4] = py2; computesList[num][5] = pz2;
     }
     else {
-  /*    if (dx == 0) {
-	px1 = px2 = x;
-
-	if (dy == 0) { 
-	  py1 = py2 = y;
-	  if (dz == 0) { pz1 = pz2 = z; }
-	  if (dz > 0) { 
-	    pz1 = z;
-	    pz2 = WRAP_Z(z+dz);
-	  }
-	  if (dz < 0){
-	    pz2 = z;
-	    pz1 = WRAP_Z(z+dz);
-	  }
-	}
-
-	if (dy > 0) { 
-	  py2 = WRAP_Y(y+dy);
-	  pz2 = WRAP_Z(z+dz);
-	  py1 = y;
-	  pz1 = z; 
-	}
-	
-	if (dy < 0) { 
-	  py1 = WRAP_Y(y+dy);
-	  pz1 = WRAP_Z(z+dz);
-	  py2 = y;
-	  pz2 = z; 
-	}
-      }
-
-      if (dx > 0){
-*/	px2 = WRAP_X(x+dx);
-	py2 = WRAP_Y(y+dy);
-	pz2 = WRAP_Z(z+dz);
-	px1 = x;
-	py1 = y;
-	pz1 = z; 
-/*      }
-
-      if (dx < 0){
-	px1 = WRAP_X(x+dx);
-	py1 = WRAP_Y(y+dy);
-	pz1 = WRAP_Z(z+dz);
-	px2 = x;
-	py2 = y;
-	pz2 = z; 
-      }
-  */    px1 = px2 - dx + 2;
+      px2 = WRAP_X(x+dx);
+      py2 = WRAP_Y(y+dy);
+      pz2 = WRAP_Z(z+dz);
+      px1 = x;
+      py1 = y;
+      pz1 = z; 
+      px1 = px2 - dx + 2;
       px2 = px2+2;
       py1 = py2 - dy + 2;
       py2 = py2+2;
       pz1 = pz2 - dz + 2;
       pz2 = pz2+2;
-    computesList[num][0] = px2; computesList[num][1] = py2; computesList[num][2] = pz2; 
-    computesList[num][3] = px1; computesList[num][4] = py1; computesList[num][5] = pz1;
+      computesList[num][0] = px2; computesList[num][1] = py2; computesList[num][2] = pz2; 
+      computesList[num][3] = px1; computesList[num][4] = py1; computesList[num][5] = pz1;
     }
-
-    /*if (dx == 0) {
-      px1 = px2 = x;
-
-      if (dy == 0) { 
-	py1 = py2 = y;
-	if (dz == 0) { pz1 = pz2 = z; }
-	if (dz > 0) { (z >= patchArrayDimZ - nbrsZ/2) ? ( pz1 = WRAP_Z(z+dz), pz2 = z ) : ( pz1 = z, pz2 = z+dz ); }
-	if (dz < 0) { (z < nbrsZ/2) ? ( pz1 = z, pz2 = WRAP_Z(z+dz) ) : ( pz1 = z+dz, pz2 = z ); }
-      }
-
-      if (dy > 0) { 
-	(y >= patchArrayDimY - nbrsY/2) ? 
-	( py1 = WRAP_Y(y+dy), pz1 = WRAP_Z(z+dz), py2 = y, pz2 = z ) : 
-	( py1 = y, pz1 = z, py2 = y+dy, pz2 = WRAP_Z(z+dz) );
-      }
-
-      if (dy < 0) { 
-	(y < nbrsY/2) ? 
-	( py1 = y, pz1 = z, py2 = WRAP_Y(y+dy), pz2 = WRAP_Z(z+dz) ) : 
-	( py1 = y+dy, pz1 = WRAP_Z(z+dz), py2 = y, pz2 = z ); 
-      }
-    } // dx == 0
-
-    if (dx > 0) {
-      (x >= patchArrayDimX - nbrsX/2) ? 
-      ( px1 = WRAP_X(x+dx), py1 = WRAP_Y(y+dy), pz1 = WRAP_Z(z+dz), px2 = x, py2 = y, pz2 = z ) : 
-      ( px1 = x, py1 = y, pz1 = z, px2 = WRAP_X(x+dx), py2 = WRAP_Y(y+dy), pz2 = WRAP_Z(z+dz) ) ;
-    }
-
-    if (dx < 0) {
-      (x < nbrsX/2) ? 
-      ( px1 = x, py1 = y, pz1 = z, px2 = WRAP_X(x+dx), py2 = WRAP_Y(y+dy), pz2 = WRAP_Z(z+dz) ) :
-      ( px1 = WRAP_X(x+dx), py1 = WRAP_Y(y+dy), pz1 = WRAP_Z(z+dz), px2 = x, py2 = y, pz2 = z ) ;
-    }*/
-
 
     //insert only the upper right half computes
   } // end of for loop
@@ -302,43 +224,41 @@ void Patch::start() {
   msg->doAtSync = false;
   // If using pairlists determine whether or not its time to update the pairlist
   if (usePairLists){
-    if (stepCount == 0 || ((stepCount % migrateStepCount == 1) && stepCount > 1)){
+    // set up pairlsit at startup
+    if (stepCount == 0)
       msg->updateList = true;
-#ifdef USE_SECTION_MULTICAST
-      if ((stepCount - firstLdbStep) % ldbPeriod == 1){
-	CkVec<CkArrayIndex6D> elems;
-        for (int num=0; num<numNbrs; num++)
-        elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
-
-        CkArrayID computeArrayID = computeArray.ckGetArrayID();
-        mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size());
-
-        
-//	CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
-        //mCastSecProxy.ckSectionDelegate(mCastGrp);
-//	mCastGrp->resetSection(mCastSecProxy);
-//	mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
-      
-      }
-#endif
-    }
-    else{
-      msg->updateList = false;
-      if (stepCount % migrateStepCount == 0){
-
+    if (stepCount > 1) {
+      // delete pairlist if about to migrate
+      if (stepCount % migrateStepCount == 0)
 	msg->deleteList = true;
-	//if (migrateStepCount*1024 % stepCount == 0)
-	  //msg->doAtSync = true;
-      }
-      if ((stepCount - firstLdbStep) % ldbPeriod == 0){
-        msg->deleteList = true;
-      }
-      if ((stepCount - firstLdbStep) % ldbPeriod == 0){
-        msg->updateList = true;
-      }
-
+      // rebild pairlist once migrated
+      if (stepCount % migrateStepCount == 1)
+	msg->updateList = true;
+      // delete pairlist if load balancing is about to be done
+      if ((stepCount - firstLdbStep) % ldbPeriod == 0)
+	msg->deleteList = true;
+      // rebuild pairlist if load balancing was just done
+      if ((stepCount - firstLdbStep) % ldbPeriod == 1)
+	msg->updateList = true;
     }
   }
+#ifdef USE_SECTION_MULTICAST
+  // if we are using section mutlicast and we just did migration we need to rebuild the section
+  if (stepCount > 1 && (stepCount - firstLdbStep) % ldbPeriod == 1){
+    CkVec<CkArrayIndex6D> elems;
+    for (int num=0; num<numNbrs; num++)
+      elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
+
+    CkArrayID computeArrayID = computeArray.ckGetArrayID();
+    mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size());
+    
+//	CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
+    //mCastSecProxy.ckSectionDelegate(mCastGrp);
+//	mCastGrp->resetSection(mCastSecProxy);
+//	mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
+  
+  }
+#endif
   msg->lbOn = false;
   if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 1) || stepCount == 0){
     if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
