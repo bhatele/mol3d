@@ -75,6 +75,11 @@ inline CkVec<int>* calcPairForcesPL(ParticleDataMsg* first, ParticleDataMsg* sec
   ptpCutOffSqd = ptpCutOff * ptpCutOff;
   powTwenty = pow(10.0, -20);
 
+  /*TODO-Edgar: This way of building a pairlist is stupid.
+   * The proper way to do it is to sort by particle position (via voxels or something),
+   * then store just 2 indices for each particle. This is more cache efficient and uses more
+   * light-weight pairlists.
+   */
   //check if pairlist needs to be updated
   if (first->updateList){
     pairList = new CkVec<int>[firstLen];
