@@ -1,0 +1,15 @@
+Instructions to compile Molecular3D:
+
+1. Run the copy_namd.sh script (specify a correct path for namd inside the
+script) in the src_namd folder
+2. Do make in the compile folder
+
+To run specify 3 parameters:
+
+1. A .namd config file
+2. The number of processors, and
+3. a load balancer 
+
+i.e. ./charmrun +p8 ./mol3d apoa1.namd 8 +balancer DummyLB
+
+run from the same folder as namd parameter files (need a .js format file)
