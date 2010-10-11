@@ -23,11 +23,7 @@
 extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Patch patchArray;
 extern /* readonly */ CProxy_Compute computeArray;
-//extern /* readonly */ CProxy_GridCompute gridComputeArray;
-//extern /* readonly */ CProxy_PMECompositor PMECompArray;
-//extern /* readonly */ CProxy_PMEDecompositor PMEDecompArray;
 extern /* readonly */ CkGroupID mCastGrpID;
-
 
 extern /* readonly */ int numParts;
 extern /* readonly */ int patchArrayDimX;	// Number of Chares in X
@@ -44,11 +40,6 @@ extern /* readonly */ int patchOriginZ;
 extern /* readonly */ int compArrayLenX;
 extern /* readonly */ int compArrayLenY;
 extern /* readonly */ int compArrayLenZ;
-extern /* readonly */ int pmeGridDimX;
-extern /* readonly */ int pmeGridDimY;
-extern /* readonly */ int pmeGridDimZ;
-extern /* readonly */ BigReal pmeCellSize;
-extern /* readonly */ int pmeCutOff;
 extern /* readonly */ int migrateStepCount;
 extern /* readonly */ int finalStepCount; 
 extern /* readonly */ int firstLdbStep; 

@@ -38,13 +38,6 @@ typedef double BigReal;
 #define COMPARRAY_LEN_Y         3        
 #define COMPARRAY_LEN_Z         3        
 
-#define PMEGRID_DIM_X           30
-#define PMEGRID_DIM_Y           30	// must be a multiple of CompArray and PatchArray dimensions
-#define PMEGRID_DIM_Z           30
-#define PME_CELL_SIZE           (PATCH_SIZE_X / (PMEGRID_DIM_X / PATCHARRAY_DIM_X))
-					// assumes cubic patch array  (careful with rounding)
-#define PME_CUT_OFF             PATCH_SIZE_X
-
 #define MIGRATE_STEPCOUNT	5
 #define DEFAULT_FINALSTEPCOUNT	101
 #define MAX_VELOCITY		30.0

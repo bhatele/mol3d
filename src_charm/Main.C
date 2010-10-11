@@ -30,9 +30,6 @@
 /* readonly */ CProxy_Main mainProxy;
 /* readonly */ CProxy_Patch patchArray;
 /* readonly */ CProxy_Compute computeArray;
-///* readonly */ CProxy_GridCompute gridComputeArray;
-///* readonly */ CProxy_PMECompositor PMECompArray;
-///* readonly */ CProxy_PMEDecompositor PMEDecompArray;
 /* readonly */ CkGroupID mCastGrpID;
 
 /* readonly */ vdwParams *vdwTable;
@@ -53,11 +50,6 @@
 /* readonly */ int compArrayLenX;
 /* readonly */ int compArrayLenY;
 /* readonly */ int compArrayLenZ;
-/* readonly */ int pmeGridDimX;
-/* readonly */ int pmeGridDimY;
-/* readonly */ int pmeGridDimZ;
-/* readonly */ BigReal pmeCellSize;
-/* readonly */ int pmeCutOff;
 /* readonly */ int migrateStepCount;
 /* readonly */ int finalStepCount; 
 /* readonly */ int firstLdbStep; 
@@ -99,11 +91,6 @@ Main::Main(CkArgMsg* msg) {
   compArrayLenX = COMPARRAY_LEN_X;
   compArrayLenY = COMPARRAY_LEN_Y;
   compArrayLenZ = COMPARRAY_LEN_Z;
-  pmeGridDimX = PMEGRID_DIM_X;
-  pmeGridDimY = PMEGRID_DIM_Y;
-  pmeGridDimZ = PMEGRID_DIM_Z;
-  pmeCellSize = PME_CELL_SIZE;
-  pmeCutOff = PME_CUT_OFF;
   migrateStepCount = MIGRATE_STEPCOUNT;
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
@@ -197,14 +184,6 @@ Main::Main(CkArgMsg* msg) {
 
 
   delete msg;
-  // initializing GridCompute array
-//  gridComputeArray = CProxy_GridCompute::ckNew(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
-
-  // initializing PME comp / decomp arrays
-//  CkArrayOptions opts(patchArrayDimX, patchArrayDimY, patchArrayDimZ);
-//  opts.bindTo(gridComputeArray);
-//  PMECompArray = CProxy_PMECompositor::ckNew(opts);
-//  PMEDecompArray = CProxy_PMEDecompositor::ckNew(pmeGridDimX / compArrayLenX, pmeGridDimY / compArrayLenY, pmeGridLenZ / compArrayLenZ);
 }
 
 // Constructor for chare object migration
