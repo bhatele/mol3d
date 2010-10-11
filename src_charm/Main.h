@@ -1,3 +1,14 @@
+/*****************************************************************************
+ * $Source$
+ * $Author$
+ * $Date$
+ * $Revision$
+ *****************************************************************************/
+
+/** \file Main.h
+ *  Author: Abhinav S Bhatele
+ *  Date Created: August 11th, 2008
+ */
 #include "SimParameters.h"
 #include "Parameters.h"
 
