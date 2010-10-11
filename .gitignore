@@ -1,6 +1,13 @@
 *.o
 benchmarks
-compile
+
+compile/charmrun
+compile/libCharm.a
+compile/libNamdsrc.a
+compile/mol3d
+
+src_charm/mol3d.decl.h
+src_charm/mol3d.def.h
 
 src_namd/BOCgroup.h
 src_namd/Communicate.C
@@ -28,7 +35,6 @@ src_namd/Tensor.h
 src_namd/Vector.h
 src_namd/common.C
 src_namd/common.h
-src_namd/dcdplugin.c
 src_namd/endianswap.h
 src_namd/fastio.h
 src_namd/fortread.h
@@ -39,9 +45,7 @@ src_namd/libmolfile_plugin.h
 src_namd/molfile_plugin.h
 src_namd/parm.C
 src_namd/parm.h
-src_namd/pdbplugin.c
 src_namd/periodic_table.h
-src_namd/psfplugin.c
 src_namd/readpdb.h
 src_namd/strlib.C
 src_namd/strlib.h

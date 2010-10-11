@@ -10,7 +10,6 @@ cp $SRC/Communicate.C .
 cp $SRC/Communicate.h .
 cp $SRC/ConfigList.C .
 cp $SRC/ConfigList.h .
-cp $PLUGSRC/dcdplugin.c .
 cp $SRC/Debug.h .
 cp $PLUGSRC/endianswap.h .
 cp $PLUGSRC/fastio.h .
@@ -34,13 +33,11 @@ cp $SRC/NamdTypes.h .
 cp $SRC/Parameters.h .
 cp $SRC/parm.h .
 cp $SRC/parm.C .
-cp $PLUGSRC/pdbplugin.c .
 cp $PLUGSRC/periodic_table.h .
 cp $SRC/PluginIOMgr.C .
 cp $SRC/PluginIOMgr.h .
 cp $SRC/ProcessorPrivate.C .
 cp $SRC/ProcessorPrivate.h .
-cp $PLUGSRC/psfplugin.c .
 cp $PLUGSRC/readpdb.h .
 cp $SRC/ResizeArray.h .
 cp $SRC/ResizeArrayRaw.h .

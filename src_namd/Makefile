@@ -1,8 +1,10 @@
 include ../compile/Makefile.config
 
-TARGET_LIB	= $(MOL3D)/compile/libNamdsrc.a
-OBJS		= jsplugin.o PluginIOMgr.o ConfigList.o strlib.o common.o GromacsTopFile.o MStream.o Parameters.o Communicate.o ProcessorPrivate.o InfoStream.o parm.o
-OBJS_DECL	= 
+TARGET_LIB = $(MOL3D)/compile/libNamdsrc.a
+OBJS	   = jsplugin.o PluginIOMgr.o ConfigList.o strlib.o common.o \
+	     GromacsTopFile.o MStream.o Parameters.o Communicate.o \
+	     ProcessorPrivate.o InfoStream.o parm.o
+OBJS_DECL  =
 
 mol3d_namdsrc: $(OBJS) $(OBJS_DECL)
 	$(CHARMC) -o $(TARGET_LIB) $(OBJS) -language charm++ $(OPTS)
