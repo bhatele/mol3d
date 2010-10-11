@@ -458,14 +458,14 @@ void Main::readParameterFile(const StringList* sl_params, SimParameters* sParams
   CkPrintf("Reading parameter files\n");
   fileParams = new Parameters(sParams, (StringList*)sl_params);
   numParams = fileParams->get_num_vdw_params();
-  CkPrintf("Assigned %d vdw_params\n", numParams);
+  // CkPrintf("Assigned %d vdw_params\n", numParams);
   vdwTable = new (numParams*numParams) vdwParams;
   vdwTable->numParams = numParams;
   for (int i = 0; i < numParams; i++){
     for (int j = 0; j < numParams; j++){
       vdwp = &vdwTable->params[i*numParams +j];
       if (fileParams->get_vdw_pair_params((Index)i, (Index)j, &rA, &rB, &rA14, &rB14) == 1){
-	CkPrintf("retreived params for (%d, %d)\n", i,j);
+	// CkPrintf("retreived params for (%d, %d)\n", i,j);
 	vdwp->A = (BigReal)rA;
 	vdwp->B = (BigReal)rB;
 	vdwp->A14 = (BigReal)rA14;
