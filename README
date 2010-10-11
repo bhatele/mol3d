@@ -1,15 +1,34 @@
-Instructions to compile Molecular3D:
+================================================================================
+                                  Molecular3D
+================================================================================
+
+Authors:
+  Abhinav Bhatele
+  Edgar Solomonik
+
+
+================================================================================
+			   INSTRUCTIONS FOR COMPILING
+================================================================================
 
 1. Run the copy_namd.sh script (specify a correct path for namd inside the
 script) in the src_namd folder
+NOTE: NAMD source from 2010-04-01 will definitely work
+
 2. Do make in the compile folder
 
-To run specify 3 parameters:
+
+================================================================================
+                             INSTRUCTIONS FOR RUNNING
+================================================================================
+
+To run specify three parameters:
 
 1. A .namd config file
 2. The number of processors, and
-3. a load balancer 
+3. a load balancer
 
 i.e. ./charmrun +p8 ./mol3d apoa1.namd 8 +balancer DummyLB
 
 run from the same folder as namd parameter files (need a .js format file)
+================================================================================
