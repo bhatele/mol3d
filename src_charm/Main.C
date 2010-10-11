@@ -12,9 +12,6 @@
 
 #include "time.h"
 #include "defs.h"
-#ifdef RUN_LIVEVIZ
-  #include "liveViz.h"
-#endif
 #include "mol3d.decl.h"
 #include "Main.h"
 #include "Patch.h"
@@ -216,13 +213,6 @@ void Main::startUpDone() {
 
     case 1:
       CkPrintf("MULTICAST SECTIONS .... CREATED\n");
-#endif
-
-#ifdef RUN_LIVEVIZ
-      // setup liveviz
-      CkCallback c(CkIndex_Patch::requestNextFrame(0), patchArray);
-      liveVizConfig cfg(liveVizConfig::pix_color,true);
-      liveVizInit(cfg,patchArray,c);
 #endif
 
       CkPrintf("STARTING SIMULATION .... \n\n");

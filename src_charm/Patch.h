@@ -131,9 +131,6 @@ class Patch : public CBase_Patch {
     void ftresume();
     void receiveForces(ParticleForceMsg *updates);
     void checkNextStep();	// checks whether to continue with next step
-#ifdef RUN_LIVEVIZ
-    void requestNextFrame(liveVizRequestMsg *m);
-#endif
     
     void pup(PUP::er &p){
       CBase_Patch::pup(p); 

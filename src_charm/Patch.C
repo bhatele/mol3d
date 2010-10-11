@@ -5,9 +5,6 @@
 
 #include "time.h"
 #include "defs.h"
-#ifdef RUN_LIVEVIZ
-  #include "liveViz.h"
-#endif
 #include "mol3d.decl.h"
 #include "Main.h"
 #include "Patch.h"
@@ -590,60 +587,6 @@ Particle& Patch::wrapAround(Particle &p) {
 
   return p;
 }
-
-// Helper function to help with LiveViz
-void color_pixel(unsigned char*buf,int width, int height, int xpos,int ypos,
-                             unsigned char R,unsigned char G,unsigned char B) {
-  if(xpos>=0 && xpos<width && ypos>=0 && ypos<height) {
-    buf[3*(ypos*width+xpos)+0] = R; 
-    buf[3*(ypos*width+xpos)+1] = G; 
-    buf[3*(ypos*width+xpos)+2] = B; 
-  }
-}
-    
-#ifdef RUN_LIVEVIZ
-// Each chare provides its particle data to LiveViz
-void Patch::requestNextFrame(liveVizRequestMsg *lvmsg) {
-  // These specify the desired total image size requested by the client viewer
-  int wdes = lvmsg->req.wid;
-  int hdes = lvmsg->req.ht;
-   
-  int myWidthPx = wdes / patchArrayDimX;
-  int myHeightPx = hdes / patchArrayDimY;
-  int sx=thisIndex.x*myWidthPx;
-  int sy=thisIndex.y*myHeightPx; 
-
-  // set the output pixel values for rectangle
-  // Each component is a char which can have 256 possible values
-  unsigned char *intensity= new unsigned char[3*myWidthPx*myHeightPx];
-  for(int i=0; i<myHeightPx; ++i)
-    for(int j=0; j<myWidthPx; ++j)
-      color_pixel(intensity,myWidthPx,myHeightPx,j,i,0,0,0);	// black background
-
-  for (int i=0; i < particles.length(); i++ ) {
-    int xpos = (int)((particles[i].x /(BigReal) (patchSizeX*patchArrayDimX)) * wdes) - sx;
-    int ypos = (int)((particles[i].y /(BigReal) (patchSizeY*patchArrayDimY)) * hdes) - sy;
-
-    Color c(particles[i].id);
-    color_pixel(intensity,myWidthPx,myHeightPx,xpos+1,ypos,c.R,c.B,c.G);
-    color_pixel(intensity,myWidthPx,myHeightPx,xpos-1,ypos,c.R,c.B,c.G);
-    color_pixel(intensity,myWidthPx,myHeightPx,xpos,ypos+1,c.R,c.B,c.G);
-    color_pixel(intensity,myWidthPx,myHeightPx,xpos,ypos-1,c.R,c.B,c.G);
-    color_pixel(intensity,myWidthPx,myHeightPx,xpos,ypos,c.R,c.B,c.G);
-  }
-        
-  for(int i=0; i<myHeightPx; ++i)
-    for(int j=0; j<myWidthPx; ++j) {
-      // Draw red lines
-      if(i==0 || j==0) {
-	color_pixel(intensity,myWidthPx,myHeightPx,j,i,128,0,0);
-      }
-    }
-        
-  liveVizDeposit(lvmsg, sx,sy, myWidthPx,myHeightPx, intensity, this, max_image_data);
-  delete[] intensity;
-}
-#endif
 
 // Prints all particles 
 void Patch::print(){

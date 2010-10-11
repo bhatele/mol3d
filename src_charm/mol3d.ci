@@ -86,7 +86,6 @@ mainmodule mol3d {
     entry void ftresume();
     entry void receiveParticles(CkVec<Particle> updates);
     entry [local] void checkNextStep();
-    // entry void requestNextFrame(liveVizRequestMsg *m);
     entry void ResumeFromSync();
   };
 

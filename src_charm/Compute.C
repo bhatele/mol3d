@@ -4,9 +4,6 @@
  */
 
 #include "defs.h"
-#ifdef RUN_LIVEVIZ
-  #include "liveViz.h"
-#endif
 #include "mol3d.decl.h"
 #include "Patch.h"
 #include "Compute.h"
