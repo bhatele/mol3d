@@ -81,7 +81,7 @@
 Main::Main(CkArgMsg* msg) {
   LBTurnInstrumentOff();
   stepTime = CmiWallTimer();
-  CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS RUNNING ...\n");
+  CkPrintf("\nLENNARD JONES MOLECULAR DYNAMICS START UP ...\n");
   numParts = 0;
 
   usePairLists = USE_PAIRLISTS;
@@ -181,7 +181,7 @@ Main::Main(CkArgMsg* msg) {
 	patchArray(x, y, z).insert(fdmsgcopy, pe);
       }
   patchArray.doneInserting();
-  CkPrintf("%d by %d by %d PATCHES CREATED\n", patchArrayDimX, patchArrayDimY, patchArrayDimZ);
+  CkPrintf("\nNUMBER OF PATCHES: %d X %d X %d .... CREATED\n", patchArrayDimX, patchArrayDimY, patchArrayDimZ);
 
 #ifdef USE_SECTION_MULTICAST
   // initializing the CkMulticastMgr
@@ -211,12 +211,12 @@ Main::Main(CkArgMsg* msg) {
 Main::Main(CkMigrateMessage* msg): CBase_Main(msg) { }
 
 void Main::lbBarrier(){
-  CkPrintf("got to lbBarrier at %f\n", CmiWallTimer());
+  // CkPrintf("got to lbBarrier at %f\n", CmiWallTimer());
   patchArray.resume();
 }
 
 void Main::ftBarrier(){
-  CkPrintf("got to ftBarrier at %f\n", CmiWallTimer());
+  // CkPrintf("got to ftBarrier at %f\n", CmiWallTimer());
   CkCallback cb(CkIndex_Patch::ftresume(), patchArray);
   CkStartMemCheckpoint(cb);
 }
@@ -229,14 +229,14 @@ void Main::startUpDone() {
   switch(phase) {
     case 0:
       computeArray.doneInserting();
-      CkPrintf("%d COMPUTES CREATED\n", (numNbrs/2+1) * patchArrayDimX * patchArrayDimY * patchArrayDimZ);
+      CkPrintf("NUMBER OF COMPUTES: %d .... CREATED\n", (numNbrs/2+1) * patchArrayDimX * patchArrayDimY * patchArrayDimZ);
 #ifdef USE_SECTION_MULTICAST
       phase++;
       patchArray.createSection();
       break;
 
     case 1:
-      CkPrintf("MULTICAST SECTIONS CREATED\n");
+      CkPrintf("MULTICAST SECTIONS .... CREATED\n");
 #endif
 
 #ifdef RUN_LIVEVIZ
@@ -246,6 +246,7 @@ void Main::startUpDone() {
       liveVizInit(cfg,patchArray,c);
 #endif
 
+      CkPrintf("STARTING SIMULATION .... \n\n");
       patchArray.start();
       break;
   }
@@ -441,7 +442,7 @@ FileDataMsg* Main::readParticleData() {
   patchOriginX = (int)minX;
   patchOriginY = (int)minY;
   patchOriginZ = (int)minZ;
-  CkPrintf("origin is [%d][%d][%d]\n", patchOriginX, patchOriginY, patchOriginZ);
+  // CkPrintf("origin is [%d][%d][%d]\n", patchOriginX, patchOriginY, patchOriginZ);
   return fdmsg;
 
   // do we need to read the velocities?

@@ -266,7 +266,7 @@ void Patch::start() {
 #endif
   msg->lbOn = false;
   if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 1) || stepCount == 0){
-    if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
+    // if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
     msg->lbOn = true;
   }
   if ((stepCount - firstLdbStep) % ldbPeriod == 0){
@@ -464,7 +464,7 @@ void Patch::checkNextStep(){
     } else {
       if (!pause){
 	if ((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0){
-	  //if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
+	  // if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
 	  contribute(CkCallback(CkIndex_Main::lbBarrier(),mainProxy));
 	  return;
 	}
@@ -487,9 +487,7 @@ void Patch::checkNextStep(){
 }
 
 void Patch::ResumeFromSync(){
-  
-    if (thisIndex.x+thisIndex.y+thisIndex.z == 0)
-      CkPrintf("patch 0 ResumeFromSync at %f\n",CmiWallTimer());
+    // if (thisIndex.x+thisIndex.y+thisIndex.z == 0) CkPrintf("patch 0 ResumeFromSync at %f\n",CmiWallTimer());
     pause = false;
     stepTime = CmiWallTimer();
     thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
@@ -504,15 +502,13 @@ void Patch::resume(){
     resumeCount = 0;
   }*/
   if (!pause){
-    if (thisIndex.x+thisIndex.y+thisIndex.z == 0)
-      CkPrintf("patch 0 calling LBInstrumentation on at %f\n",CmiWallTimer());
+    // if (thisIndex.x+thisIndex.y+thisIndex.z == 0) CkPrintf("patch 0 calling LBInstrumentation on at %f\n",CmiWallTimer());
     LBTurnInstrumentOn();
     loadTime = 0;
     start();
   }
   else {
-    if (thisIndex.x+thisIndex.y+thisIndex.z == 0)
-      CkPrintf("patch 0 calling AtSync at %f\n",CmiWallTimer());
+    // if (thisIndex.x+thisIndex.y+thisIndex.z == 0) CkPrintf("patch 0 calling AtSync at %f\n",CmiWallTimer());
     AtSync();
   }
 }
