@@ -24,9 +24,9 @@ NOTE: NAMD source from 2010-04-01 will definitely work
 
 To run specify three parameters:
 
-1. A .namd config file
-2. The number of processors, and
-3. a load balancer
+1. A NAMD configuration file (such as apoa1.namd)
+2. The branching factor (default set to 2), and
+3. A load balancing strategy
 
 i.e. ./charmrun +p8 ./mol3d apoa1.namd 8 +balancer DummyLB
 
