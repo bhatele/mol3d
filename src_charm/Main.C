@@ -44,9 +44,6 @@
 /* readonly */ int patchOriginX;
 /* readonly */ int patchOriginY;
 /* readonly */ int patchOriginZ;
-/* readonly */ int compArrayLenX;
-/* readonly */ int compArrayLenY;
-/* readonly */ int compArrayLenZ;
 /* readonly */ int migrateStepCount;
 /* readonly */ int finalStepCount; 
 /* readonly */ int firstLdbStep; 
@@ -85,9 +82,6 @@ Main::Main(CkArgMsg* msg) {
   patchOriginX = PATCH_ORIGIN_X;
   patchOriginY = PATCH_ORIGIN_Y;
   patchOriginZ = PATCH_ORIGIN_Z;
-  compArrayLenX = COMPARRAY_LEN_X;
-  compArrayLenY = COMPARRAY_LEN_Y;
-  compArrayLenZ = COMPARRAY_LEN_Z;
   migrateStepCount = MIGRATE_STEPCOUNT;
   finalStepCount = DEFAULT_FINALSTEPCOUNT;
   firstLdbStep = DEFAULT_FIRST_LDB;
