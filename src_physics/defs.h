@@ -34,10 +34,6 @@ typedef double BigReal;
 #define PATCH_ORIGIN_Y		0
 #define PATCH_ORIGIN_Z		0
 
-#define COMPARRAY_LEN_X         3
-#define COMPARRAY_LEN_Y         3        
-#define COMPARRAY_LEN_Z         3        
-
 #define MIGRATE_STEPCOUNT	5
 #define DEFAULT_FINALSTEPCOUNT	101
 #define MAX_VELOCITY		30.0

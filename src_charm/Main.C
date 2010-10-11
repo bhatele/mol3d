@@ -1,10 +1,3 @@
-/*****************************************************************************
- * $Source: /cvsroot/charm/examples/charm++/Molecular3D/src_charm/Main.C,v $
- * $Author: bhatele $
- * $Date: 2009-08-11 23:15:28 $
- * $Revision: 1.14 $
- *****************************************************************************/
-
 /** \file Main.C
  *  Author: Abhinav S Bhatele
  *  Date Created: August 11th, 2008
