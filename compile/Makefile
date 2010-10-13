@@ -6,17 +6,13 @@ all: full_code
 #===============================================================================
 full_code: charm namdsrc
 	cd $(MOL3D)/compile; \
-        $(CHARMC) -module EveryLB -o $(BINARY) \
-		  -module CkMulticast  \
-                  -language charm++ \
-                  -L. -lCharm -lNamdsrc -lck
+	$(CHARMC) -module DummyLB -module GreedyLB -o $(BINARY) \
+		-module CkMulticast -language charm++ \
+		-L. -lCharm -lNamdsrc -lck
 
 #===============================================================================
 charm:
-	(cd $(MAKE_MOL3D_CHARM); make OPTS="$(OPTS)";)
-
-#physics:
-#	(cd $(MAKE_MOL3D_PHYSICS); make OPTS="$(OPTS)";)
+	(cd $(MAKE_MOL3D_CHARM); make OPTS="$(OPTS) -DUSE_SECTION_MULTICAST";)
 
 namdsrc:
 	(cd $(MAKE_MOL3D_NAMDSRC); make OPTS="$(OPTS)";)
