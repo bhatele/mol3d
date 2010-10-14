@@ -6,7 +6,7 @@ all: full_code
 #===============================================================================
 full_code: charm namdsrc
 	cd $(MOL3D)/compile; \
-	$(CHARMC) -module DummyLB -module GreedyLB -o $(BINARY) \
+	$(CHARMC) -module CommonLBs -o $(BINARY) \
 		-module CkMulticast -language charm++ \
 		-L. -lCharm -lNamdsrc -lck
 
