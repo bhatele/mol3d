@@ -1,7 +1,7 @@
 include ../compile/Makefile.config
 
 TARGET_LIB	= $(MOL3D)/compile/libCharm.a
-OBJS		= Main.o Patch.o Compute.o
+OBJS		= Main.o Patch.o Compute.o Reader.o
 OBJS_DECL	= mol3d.decl.h
 INC		= -I$(MAKE_MOL3D_PHYSICS) -I$(MAKE_MOL3D_NAMDSRC)
 
@@ -16,8 +16,14 @@ Main.o: Main.C Main.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h $(MAKE_MOL3D_PHY
 Patch.o: Patch.C Patch.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h 
 	$(CHARMC) $(OPTS) $(INC) -o Patch.o Patch.C
 
-mol3d.decl.h: mol3d.ci
+mol3d.decl.h: mol3d.ci reader.decl.h
 	$(CHARMC) mol3d.ci
+
+reader.decl.h: reader.ci
+	$(CHARMC) reader.ci
+
+Reader.o: Reader.C mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h 
+	$(CHARMC) $(OPTS) $(INC) -o Reader.o Reader.C
 
 Compute.o: Compute.C Compute.h mol3d.decl.h $(MAKE_MOL3D_PHYSICS)/defs.h $(MAKE_MOL3D_PHYSICS)/nonbonded.h
 	$(CHARMC) $(OPTS) $(INC) -o Compute.o Compute.C

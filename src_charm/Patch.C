@@ -3,12 +3,13 @@
  *  Date Created: August 11th, 2008
  */
 
-#include "time.h"
+#include <time.h>
+
 #include "defs.h"
 #include "mol3d.decl.h"
-#include "Main.h"
+#include "Reader.h"
 #include "Patch.h"
-#include "Compute.h"
+
 #include "ConfigList.h"
 #include "molfile_plugin.h"
 #include "PluginIOMgr.h"
@@ -48,16 +49,24 @@ extern /* readonly */ int nbrsX;
 extern /* readonly */ int nbrsY;
 extern /* readonly */ int nbrsZ;
 
-extern /* readonly */ double A;
-extern /* readonly */ double B;
-
-// Default constructor
+/* Default constructor */
 Patch::Patch(FileDataMsg* fdmsg) {
   LBTurnInstrumentOff();
-  int i;
   inbrs = numNbrs;
   usesAtSync = CmiTrue;
-  //double d1 = CmiWallTimer();
+
+  updateCount = 0;
+  forceCount = 0;
+  stepCount = 0;
+  resumeCount = 0;
+  updateFlag = false;
+  incomingFlag = false;
+  pause = false;
+  incomingParticles.resize(0);
+  // setMigratable(CmiFalse);
+
+  int i;
+
   // Particle initialization
   myNumParts = 0;
   for(i=0; i < fdmsg->length; i++) {
@@ -75,26 +84,15 @@ Patch::Patch(FileDataMsg* fdmsg) {
     particles[myNumParts].fx = 0;
     particles[myNumParts].fy = 0;
     particles[myNumParts].fz = 0;
-     
+
     particles[myNumParts].id = (thisIndex.x*patchArrayDimX + thisIndex.y) * numParts / (patchArrayDimX*patchArrayDimY)  + i;
-    
+
     particles[myNumParts].vdw_type = fdmsg->vdw_type[i];
     myNumParts++;
-  }	
-  //CkPrintf("Creating %d particles on Patch [%d][%d][%d]\n", myNumParts, thisIndex.x, thisIndex.y, thisIndex.z);
+  }
 
-
-  updateCount = 0;
-  forceCount = 0;
-  stepCount = 0;
-  resumeCount = 0;
-  updateFlag = false;
-  incomingFlag = false;
-  pause = false;
-  incomingParticles.resize(0);
- // setMigratable(CmiFalse);
   delete fdmsg;
-  //loadTime = CmiWallTimer() - d1;
+  contribute(CkCallback(CkIndex_Main::startUpDone(), mainProxy));
 }
 
 // Constructor for chare object migration
@@ -104,7 +102,6 @@ Patch::Patch(CkMigrateMessage *msg): CBase_Patch(msg) {
 }  
                                        
 Patch::~Patch() {}
-
 
 void Patch::createComputes() {
   //double d1 = CmiWallTimer();
@@ -134,9 +131,9 @@ void Patch::createComputes() {
 
   // these computes will be created by other patches
   for (num=0; num<numNbrs; num++) {
-    dx = num / (nbrsY * nbrsZ)            - nbrsX/2;
+    dx = num / (nbrsY * nbrsZ)           - nbrsX/2;
     dy = (num % (nbrsY * nbrsZ)) / nbrsZ - nbrsY/2;
-    dz = num % nbrsZ                       - nbrsZ/2;
+    dz = num % nbrsZ                     - nbrsZ/2;
 
     if (num >= numNbrs/2){
       px1 = x + 2;
@@ -201,7 +198,7 @@ void Patch::start() {
   int z = thisIndex.z;
   int len = particles.length();
   
-  if (stepCount == 0 && x+y+z ==0)
+  if (stepCount == 0 && x+y+z == 0)
     stepTime = CmiWallTimer();
 
   ParticleDataMsg* msg = new (len) ParticleDataMsg;
@@ -213,7 +210,7 @@ void Patch::start() {
   msg->updateList = false;
   msg->doAtSync = false;
   // If using pairlists determine whether or not its time to update the pairlist
-  if (usePairLists){
+  if (usePairLists) {
     // set up pairlsit at startup
     if (stepCount == 0)
       msg->updateList = true;
@@ -232,6 +229,7 @@ void Patch::start() {
 	msg->updateList = true;
     }
   }
+
 #ifdef USE_SECTION_MULTICAST
   // if we are using section mutlicast and we just did migration we need to rebuild the section
   if (stepCount > 1 && (stepCount - firstLdbStep) % ldbPeriod == 1){
@@ -287,7 +285,7 @@ void Patch::start() {
       newMsg->y = y;
       newMsg->z = z;
       newMsg->lengthAll = len;
-      if (usePairLists){
+      if (usePairLists) {
 	newMsg->updateList = msg->updateList;
 	newMsg->deleteList = msg->deleteList;
       }
@@ -426,9 +424,9 @@ void Patch::checkNextStep(){
       particles.push_back(incomingParticles[i]);
     incomingParticles.removeAll();
 
-    if (thisIndex.x==0 && thisIndex.y==0 && thisIndex.z==0 && stepCount%20==0) {
+    if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0 && stepCount%20 == 0) {
       timer = CmiWallTimer();
-      CkPrintf("Step %d Benchmark Time %f ms/step, Total Time Elapsed %f ms\n", stepCount, ((timer - stepTime)/20)*1000, timer);
+      CkPrintf("Step %d Benchmark Time %f ms/step, Total Time Elapsed %f s\n", stepCount, ((timer - stepTime)/20)*1000, timer);
       stepTime = timer;
 //      if (stepCount == 300)
 //	traceBegin();

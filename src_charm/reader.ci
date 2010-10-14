@@ -1,0 +1,40 @@
+module reader {
+  readonly message vdwParams *vdwTable;	// vdw params table
+  readonly message sqrtTable *rootTable;// sqrt interpolation table
+
+  readonly int finalStepCount;	// number of steps at which the cells should
+                                // stop computation
+  readonly bool twoAwayX;       // divide patches into half in the x direction
+  readonly bool twoAwayY;       // divide patches into half in the y direction
+  readonly bool twoAwayZ;       // divide patches into half in the z direction
+
+  readonly int migrateStepCount;// interval between patch migrations
+  readonly int ptpCutOff;       // cut off for atom to atom forces
+  readonly int patchMargin;     // difference between patchSize and ptpCutOff
+
+  readonly int firstLdbStep;	// do load balancing after this many steps
+  readonly int ldbPeriod;       // do load balancing every period
+  readonly int ftPeriod;        // do load balancing every period
+  readonly BigReal stepTime;
+  readonly BigReal timeDelta;   // real time per step
+
+  message vdwParams {
+    vdwPars params[];
+  };
+
+  message sqrtTable {
+    sqrtPars pars[];
+  };
+
+  message FileDataMsg {
+    BigReal charge[];
+    BigReal mass[];
+    loc coords[];
+    int vdw_type[];
+  };
+
+  mainchare [migratable] Reader {
+    entry Reader();
+  };
+};
+

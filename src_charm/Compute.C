@@ -5,8 +5,10 @@
 
 #include "defs.h"
 #include "mol3d.decl.h"
+#include "Reader.h"
 #include "Patch.h"
 #include "Compute.h"
+
 #include "ckmulticast.h"
 #include "nonbonded.h"
 #include "ConfigList.h"
@@ -31,9 +33,6 @@ extern /* readonly */ int patchSizeZ;
 extern /* readonly */ int ptpCutOff;
 extern /* readonly */ int finalStepCount; 
 extern /* readonly */ BigReal stepTime; 
-
-extern /* readonly */ double A;			// Force Calculation parameter 1
-extern /* readonly */ double B;			// Force Calculation parameter 2
 
 // Compute - Default constructor
 Compute::Compute() {

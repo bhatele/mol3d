@@ -8,34 +8,6 @@
 
 extern /*readonly*/ int numNbrs;
 
-class vdwParams : public CMessage_vdwParams {
-  public:
-    vdwPars *params;
-    int numParams;
-};
-
-class loc{
-  public:
-    BigReal x;
-    BigReal y;
-    BigReal z;
-
-    void pup(PUP::er &p){
-      p|x; p|y; p|z;
-    }
-};
-
-class partData{
-  public:
-    loc coord;
-    BigReal charge;
-    int vdwIndex;
-    
-    void pup(PUP::er &p){
-      p|coord; p|charge; p|vdwIndex;
-    }
-};
-
 class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
   public:
     //BigReal* particleLocX;
@@ -77,14 +49,17 @@ class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
     } 
 };
 
-class FileDataMsg : public CMessage_FileDataMsg {
+
+class ParticleForceMsg : public CMessage_ParticleForceMsg {
   public:
-    BigReal* charge;
-    BigReal* mass;
-    loc* coords; //encoded as x1 y1 z1 x2 y2 z2...
-    int* vdw_type;
-    int length;
+    int lengthX;
+    int lengthY;
+    int lengthZ;
+   
+    force* forces;
+    int lengthUpdates;
 };
+
 
 /** \class Patch
  *  Class representing a cell in the grid. 
@@ -94,8 +69,8 @@ class Patch : public CBase_Patch {
   private:
     CkVec<Particle> particles;
     CkVec<Particle> incomingParticles;
-    int forceCount;		// to count the returns from interactions
-    int stepCount;		// to count the number of steps, and decide when to stop
+    int forceCount;	// to count the returns from interactions
+    int stepCount;	// to count the number of steps, and decide when to stop
     int updateCount;
     int myNumParts;
     bool updateFlag;
@@ -105,10 +80,9 @@ class Patch : public CBase_Patch {
     int resumeCount;
     double loadTime;
     int inbrs;
-    
  
     void migrateToPatch(Particle p, int &px, int &py, int &pz);
-    void updateProperties();	// updates properties after receiving forces from computes
+    void updateProperties();	// updates properties after receiving forces
     void applyForces();
     void limitVelocity(Particle &p);
     Particle& wrapAround(Particle &p);
@@ -116,7 +90,7 @@ class Patch : public CBase_Patch {
     CProxySection_Compute mCastSecProxy;
 
   public:
-    Patch(FileDataMsg *fdmsg);
+    Patch(FileDataMsg* fdmsg);
     Patch(CkMigrateMessage *msg);
     ~Patch();
 

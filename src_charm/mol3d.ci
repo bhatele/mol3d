@@ -1,45 +1,28 @@
 mainmodule mol3d {
+  extern module reader;
 
   readonly CProxy_Main mainProxy;
   readonly CProxy_Patch patchArray;
   readonly CProxy_Compute computeArray;
   readonly CkGroupID mCastGrpID;
 
-  readonly message vdwParams *vdwTable;	// vdw params table
-  readonly message sqrtTable *rootTable;// sqrt interpolation table
+  readonly int numParts;	// total number of particles
+  readonly int patchArrayDimX;	// X dimension of the Patch array
+  readonly int patchArrayDimY;	// Y dimension of the Patch array
+  readonly int patchArrayDimZ;	// Y dimension of the Patch array
+  readonly int patchSizeX;	// size of each Patch
+  readonly int patchSizeY;	// size of each Patch
+  readonly int patchSizeZ;	// size of each Patch
+  readonly int patchOriginX;	// X-coor of patch origin
+  readonly int patchOriginY;	// Y-coor of patch origin
+  readonly int patchOriginZ;	// Z-coor of patch origin
 
-  readonly int numParts;		// total number of particles
-  readonly int patchArrayDimX;		// X dimension of the Patch array
-  readonly int patchArrayDimY;		// Y dimension of the Patch array
-  readonly int patchArrayDimZ;		// Y dimension of the Patch array
-  readonly int patchSizeX;		// size of each Patch
-  readonly int patchSizeY;		// size of each Patch
-  readonly int patchSizeZ;		// size of each Patch
-  readonly int ptpCutOff;		// cut off for atom to atom forces
-  readonly int patchMargin;		// difference between patchSize and ptpCutOff
-  readonly int patchOriginX;		// X-coor of patch origin
-  readonly int patchOriginY;		// Y-coor of patch origin
-  readonly int patchOriginZ;		// Z-coor of patch origin
-  readonly int migrateStepCount;	// interval between patch migrations
-  readonly int finalStepCount;		// number of steps at which the cells should
-					// stop computation
-  readonly int firstLdbStep;		// do load balancing after this many steps
-  readonly int ldbPeriod;		// do load balancing every period
-  readonly int ftPeriod;		// do load balancing every period
-  readonly BigReal stepTime;
-  readonly BigReal timeDelta;		// real time per step
-  readonly double A;			// LJ parameter
-  readonly double B;			// LJ parameter
-  readonly bool usePairLists;		// determines whether or not to use pairlists
-					// for point to point force calculations
-  readonly bool twoAwayX;		// divide patches into half in the x direction
-  readonly bool twoAwayY;		// divide patches into half in the y direction
-  readonly bool twoAwayZ;		// divide patches into half in the z direction
+  readonly bool usePairLists;	// determines whether or not to use pairlists
+				// for point to point force calculations
   readonly int numNbrs;
   readonly int nbrsX;
   readonly int nbrsY;
   readonly int nbrsZ;
-  
 
   mainchare [migratable] Main {
     entry Main(CkArgMsg* msg);
@@ -49,29 +32,12 @@ mainmodule mol3d {
     entry void startUpDone();
   };
 
-  message vdwParams {
-    vdwPars params[];
-  };
-
-
-  message sqrtTable {
-    sqrtPars pars[];
-  };
-
-
-  message ParticleDataMsg{
+  message ParticleDataMsg {
     partData part[];
   };
 
-  message ParticleForceMsg{
+  message ParticleForceMsg {
     force forces[];
-  };
-
-  message FileDataMsg{
-    BigReal charge[];
-    BigReal mass[];
-    loc coords[];
-    int vdw_type[];
   };
 
   array [3D] Patch {
