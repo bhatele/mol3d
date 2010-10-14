@@ -17,6 +17,7 @@
   #include "ckmulticast.h"
 #endif
 
+#define NUM_STEPS	20
   
 extern /* readonly */ CProxy_Main mainProxy;
 extern /* readonly */ CProxy_Patch patchArray;
@@ -424,9 +425,9 @@ void Patch::checkNextStep(){
       particles.push_back(incomingParticles[i]);
     incomingParticles.removeAll();
 
-    if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0 && stepCount%20 == 0) {
+    if (thisIndex.x == 0 && thisIndex.y == 0 && thisIndex.z == 0 && stepCount%NUM_STEPS == 0) {
       timer = CmiWallTimer();
-      CkPrintf("Step %d Benchmark Time %f ms/step, Total Time Elapsed %f s\n", stepCount, ((timer - stepTime)/20)*1000, timer);
+      CkPrintf("Step %d Benchmark Time %f ms/step, Total Time Elapsed %f s\n", stepCount, ((timer - stepTime)/NUM_STEPS)*1000, timer);
       stepTime = timer;
 //      if (stepCount == 300)
 //	traceBegin();
