@@ -6,8 +6,8 @@ compile/libCharm.a
 compile/libNamdsrc.a
 compile/mol3d
 
-src_charm/mol3d.decl.h
-src_charm/mol3d.def.h
+src_charm/*.decl.h
+src_charm/*.def.h
 
 src_namd/BOCgroup.h
 src_namd/Communicate.C

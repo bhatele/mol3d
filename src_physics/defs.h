@@ -51,7 +51,7 @@ typedef double BigReal;
 #define WRAP_Z(a)		(((a)+patchArrayDimZ)%patchArrayDimZ)
 
 // Struct for keeping track of vdw parameters
-class vdwPars{
+class vdwPars {
   public:
     BigReal A;
     BigReal B;
@@ -106,49 +106,6 @@ class Particle {
       p | vx; p | vy; p | vz;
       p | vdw_type;
     }
-};
-
-class Color {
-  public:
-    unsigned char R, G, B;
-
-    // Generate a unique color for each index from 0 to total-1
-    Color(int index){
-      int total = 8;
-      if(index % total == 0) {
-	R = 255;
-	G = 100;
-	B = 100;
-      } else if(index % total == 1) {
-	R = 100;
-	G = 255;
-	B = 100;
-      } else if(index % total == 2) {
-	R = 100;
-	G = 100;
-	B = 255;
-      } else if(index % total == 3) {
-	R = 100;
-	G = 255;
-	B = 255;
-      } else if(index % total == 4) {
-	R = 100;
-	G = 255;
-	B = 255;
-      } else if(index % total == 5) {
-	R = 255;
-	G = 255;
-	B = 100;
-      } else if(index % total == 6) {
-	R = 255;
-	G = 100;
-	B = 255;
-      } else {
-	R = 170;
-	G = 170;
-	B = 170;
-      }
-    }	
 };
 
 #endif
