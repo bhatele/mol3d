@@ -75,7 +75,7 @@ class Patch : public CBase_Patch {
     int myNumParts;
     bool updateFlag;
     bool incomingFlag;
-    bool pause;
+    bool perform_lb;
     int **computesList;
     int resumeCount;
     double loadTime;
@@ -117,7 +117,7 @@ class Patch : public CBase_Patch {
       p | myNumParts;
       p | updateFlag;
       p | incomingFlag;
-      p | pause;
+      p | perform_lb;
       p | resumeCount;
       p | loadTime;
       p | inbrs;

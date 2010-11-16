@@ -62,7 +62,7 @@ Patch::Patch(FileDataMsg* fdmsg) {
   resumeCount = 0;
   updateFlag = false;
   incomingFlag = false;
-  pause = false;
+  perform_lb = false;
   incomingParticles.resize(0);
   // setMigratable(CmiFalse);
 
@@ -220,20 +220,20 @@ void Patch::start() {
       if (stepCount % migrateStepCount == 0)
 	msg->deleteList = true;
       // rebild pairlist once migrated
-      if (stepCount % migrateStepCount == 1)
+      if (stepCount > 2 && stepCount % migrateStepCount == 1)
 	msg->updateList = true;
       // delete pairlist if load balancing is about to be done
-      if ((stepCount - firstLdbStep) % ldbPeriod == 0)
+      if ((stepCount >= firstLdbStep) && ((stepCount - firstLdbStep) % ldbPeriod == 0))
 	msg->deleteList = true;
       // rebuild pairlist if load balancing was just done
-      if ((stepCount - firstLdbStep) % ldbPeriod == 1)
+      if ((stepCount >= firstLdbStep) && ((stepCount - firstLdbStep) % ldbPeriod == 1))
 	msg->updateList = true;
     }
   }
 
 #ifdef USE_SECTION_MULTICAST
   // if we are using section mutlicast and we just did migration we need to rebuild the section
-  if (stepCount > 1 && (stepCount - firstLdbStep) % ldbPeriod == 1){
+  if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod == 1){
     CkVec<CkArrayIndex6D> elems;
     for (int num=0; num<numNbrs; num++)
       elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
@@ -249,13 +249,13 @@ void Patch::start() {
   }
 #endif
   msg->lbOn = false;
-  if (((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 1) || stepCount == 0){
+  if (((stepCount >= firstLdbStep) && stepCount % ldbPeriod == 1) || stepCount == 0){
     // if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
     msg->lbOn = true;
   }
-  if ((stepCount - firstLdbStep) % ldbPeriod == 0){
+  if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod == 0){
     msg->doAtSync = true;
-    pause = true;
+    perform_lb = true;
   }
   for (int i = 0; i < len; i++){
     msg->part[i].coord.x = particles[i].x;
@@ -270,7 +270,8 @@ void Patch::start() {
   mCastSecProxy.interact(msg);
 #else
   int px1, py1, pz1, px2, py2, pz2;
-  
+
+ 
   for(int num=0; num<numNbrs; num++) {
     px1 = computesList[num][0];
     py1 = computesList[num][1];
@@ -446,55 +447,31 @@ void Patch::checkNextStep(){
       print();
       contribute(CkCallback(CkIndex_Main::allDone(), mainProxy)); 
     } else {
-      if (!pause){
-	if ((stepCount > firstLdbStep - 1) && stepCount % ldbPeriod == 0){
-	  // if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
-	  contribute(CkCallback(CkIndex_Main::lbBarrier(),mainProxy));
-	  return;
-	}
-        if (stepCount % ftPeriod == 1 && stepCount > 1) {
-	  contribute(CkCallback(CkIndex_Main::ftBarrier(),mainProxy));
-	  return;
-        }
-	thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
+      if (perform_lb){
+	AtSync();
+	LBTurnInstrumentOff();
+	perform_lb=false;
       }
       else{
-	AtSync();
-//	loadTime += CmiWallTimer()-d1;
-	//CkPrintf("Patch %d on processor %d had load %f\n", thisIndex.x*patchArrayDimY*patchArrayDimZ + thisIndex.y*patchArrayDimZ + thisIndex.z, CkMyPe(), loadTime);
-//	loadTime = 0;
-	contribute(CkCallback(CkIndex_Main::lbBarrier(),mainProxy));
+	thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
+	//contribute(CkCallback(CkIndex_Main::lbBarrier(),mainProxy));
       }
-	//loadTime = 0;
     }
   }
 }
 
 void Patch::ResumeFromSync(){
     // if (thisIndex.x+thisIndex.y+thisIndex.z == 0) CkPrintf("patch 0 ResumeFromSync at %f\n",CmiWallTimer());
-    pause = false;
-    stepTime = CmiWallTimer();
     thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
-    LBTurnInstrumentOff();
+    stepTime = CmiWallTimer();
+    LBTurnInstrumentOn();
     //resumeCount = 0;
 }
 
 void Patch::resume(){
- /* if (++resumeCount == numNbrs){
-    pause = false;
-    thisProxy(thisIndex.x, thisIndex.y, thisIndex.z).start();
-    resumeCount = 0;
-  }*/
-  if (!pause){
-    // if (thisIndex.x+thisIndex.y+thisIndex.z == 0) CkPrintf("patch 0 calling LBInstrumentation on at %f\n",CmiWallTimer());
-    LBTurnInstrumentOn();
-    loadTime = 0;
-    start();
-  }
-  else {
-    // if (thisIndex.x+thisIndex.y+thisIndex.z == 0) CkPrintf("patch 0 calling AtSync at %f\n",CmiWallTimer());
-    AtSync();
-  }
+    //LBTurnInstrumentOn();
+    //loadTime = 0;
+    //start();
 }
 
 void Patch::ftresume(){
