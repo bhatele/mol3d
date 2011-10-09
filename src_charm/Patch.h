@@ -7,7 +7,10 @@
 #define __PATCH_H__
 
 extern /*readonly*/ int numNbrs;
-
+extern /* readonly */ CkGroupID mCastGrpID;
+#ifdef USE_SECTION_MULTICAST
+  #include "ckmulticast.h"
+#endif
 class ParticleDataMsg : public CkMcastBaseMsg, public CMessage_ParticleDataMsg {
   public:
     //BigReal* particleLocX;
