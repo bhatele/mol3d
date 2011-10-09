@@ -231,23 +231,6 @@ void Patch::start() {
     }
   }
 
-#ifdef USE_SECTION_MULTICAST
-  // if we are using section mutlicast and we just did migration we need to rebuild the section
-  if (stepCount >= firstLdbStep && (stepCount - firstLdbStep) % ldbPeriod == 1){
-    CkVec<CkArrayIndex6D> elems;
-    for (int num=0; num<numNbrs; num++)
-      elems.push_back(CkArrayIndex6D(computesList[num][0], computesList[num][1], computesList[num][2], computesList[num][3], computesList[num][4], computesList[num][5]));
-
-    CkArrayID computeArrayID = computeArray.ckGetArrayID();
-    mCastSecProxy = CProxySection_Compute::ckNew(computeArrayID, elems.getVec(), elems.size());
-    
-//	CkMulticastMgr *mCastGrp = CProxy_CkMulticastMgr(mCastGrpID).ckLocalBranch();
-    //mCastSecProxy.ckSectionDelegate(mCastGrp);
-//	mCastGrp->resetSection(mCastSecProxy);
-//	mCastGrp->setReductionClient(mCastSecProxy, new CkCallback(CkIndex_Patch::reduceForces(NULL), thisProxy(thisIndex.x, thisIndex.y, thisIndex.z)));
-  
-  }
-#endif
   msg->lbOn = false;
   if (((stepCount >= firstLdbStep) && stepCount % ldbPeriod == 1) || stepCount == 0){
     // if (x + y + z == 0) CkPrintf("Starting Load Balancer Instrumentation at %f\n", CmiWallTimer());
